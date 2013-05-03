@@ -1,7 +1,2 @@
-require "resque-clues/version"
-
-module Resque
-  module Clues
-    # Your code goes here...
-  end
-end
+require 'resque'
+require 'resque/plugins/clues/version'
