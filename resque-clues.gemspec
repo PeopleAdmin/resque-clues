@@ -8,9 +8,9 @@ Gem::Specification.new do |gem|
   gem.version       = Resque::Clues::VERSION
   gem.authors       = ["Lance Woodson"]
   gem.email         = ["lance.woodson@peopleadmin.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.description   = %q{Adds event publishing and job tracking ability to Resque}
+  gem.summary       = %q{Adds event publishing and job tracking}
+  gem.homepage      = "https://github.com/PeopleAdmin/resque-clues"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
