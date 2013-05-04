@@ -4,7 +4,7 @@ module Resque
   module Plugins
     module Clues
       module EventPublisher
-        EVENT_TYPES = %w[enqueued]
+        EVENT_TYPES = %w[enqueued dequeued]
 
         class StandardOut
           EVENT_TYPES.each do |event_type|
