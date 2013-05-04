@@ -8,8 +8,16 @@ describe Resque::Plugins::Clues::EventPublisher do
   end
 
   describe Resque::Plugins::Clues::EventPublisher::StandardOut do
-    def verify_output(hash)
-      STDOUT.should_receive(:puts).with(hash)
+    def verify_output_for_event_type(type)
+      STDOUT.should_receive(:puts).with event_type: type.to_s,
+                                        queue: :test_queue,
+                                        metadata: {},
+                                        worker_class: "FooBar",
+                                        args: ["a", "b"]
+    end
+
+    def publish_event_type(type)
+      @publisher.send(type, :test_queue, {}, "FooBar", "a", "b")
     end
 
     before do
@@ -17,9 +25,13 @@ describe Resque::Plugins::Clues::EventPublisher do
     end
 
     it "should send enqueued event to STDOUT" do
-      verify_output :event_type=>"enqueued", :queue=>:test_queue, :metadata=>{}, 
-                    :worker_class=>"FooBar", :args=>["a", "b"]
-      @publisher.enqueued(:test_queue, {}, "FooBar", "a", "b")
+      verify_output_for_event_type :enqueued
+      publish_event_type :enqueued
+    end
+
+    it "should send dequeued event to STDOUT" do
+      verify_output_for_event_type :dequeued
+      publish_event_type :dequeued
     end
   end
 end
