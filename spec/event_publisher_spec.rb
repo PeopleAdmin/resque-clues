@@ -43,5 +43,10 @@ describe Resque::Plugins::Clues::EventPublisher do
       verify_output_for_event_type :perform_finished
       publish_event_type :perform_finished
     end
+
+    it "should send failed event to STDOUT" do
+      verify_output_for_event_type :failed
+      publish_event_type :failed
+    end
   end
 end
