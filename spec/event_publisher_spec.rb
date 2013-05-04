@@ -33,5 +33,10 @@ describe Resque::Plugins::Clues::EventPublisher do
       verify_output_for_event_type :dequeued
       publish_event_type :dequeued
     end
+
+    it "should send perform_started event to STDOUT" do
+      verify_output_for_event_type :perform_started
+      publish_event_type :perform_started
+    end
   end
 end
