@@ -41,6 +41,25 @@ module Resque
             end
           end
         end
+
+        class Composite < SimpleDelegator
+          def initialize
+            super([])
+          end
+
+          EVENT_TYPES.each do |event_type|
+            define_method(event_type) do |queue, metadata, klass, *args|
+              each do |child|
+                child.send(event_type, queue, metadata, klass, *args) rescue error(event_type, child)
+              end
+            end
+          end
+
+          private 
+          def error(event_type, child)
+            p "Error processing #{event_type} in #{child}"
+          end
+        end
       end
     end
   end

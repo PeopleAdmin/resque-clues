@@ -101,9 +101,59 @@ describe Resque::Plugins::Clues::EventPublisher do
       verify_event_written_to_log :perform_finished
     end
 
-    it "should write EVENT_TYPE event to file" do
+    it "should write failed event to file" do
       publish_event_type :failed
       verify_event_written_to_log :failed
+    end
+  end
+
+  describe Resque::Plugins::Clues::EventPublisher::Composite do
+    before do
+      @publisher = Resque::Plugins::Clues::EventPublisher::Composite.new
+      @publisher << Resque::Plugins::Clues::EventPublisher::StandardOut.new
+      @publisher << Resque::Plugins::Clues::EventPublisher::StandardOut.new
+    end
+
+    def verify_event_delegated_to_children(event_type)
+      @publisher.each do |child|
+        child.should_receive(event_type).with(:test_queue, {}, "FooBar", "a", "b")
+      end
+    end
+
+    it "should delegate enqueued event to children" do
+      verify_event_delegated_to_children :enqueued
+      publish_event_type :enqueued
+    end
+
+    it "should delegate dequeued event to children" do
+      verify_event_delegated_to_children :dequeued
+      publish_event_type :dequeued
+    end
+
+    it "should delegate destroyed event to children" do
+      verify_event_delegated_to_children :destroyed
+      publish_event_type :destroyed
+    end
+
+    it "should delegate perform_started event to children" do
+      verify_event_delegated_to_children :perform_started
+      publish_event_type :perform_started
+    end
+
+    it "should delegate perform_finished event to children" do
+      verify_event_delegated_to_children :perform_finished
+      publish_event_type :perform_finished
+    end
+
+    it "should delegate failed event to children" do
+      verify_event_delegated_to_children :failed
+      publish_event_type :failed
+    end
+
+    it "all children should be invoked when the first child throws an exception" do
+      @publisher[0].stub(:enqueued) {raise 'YOU SHALL NOT PASS'}
+      verify_event_delegated_to_children :enqueued 
+      publish_event_type :enqueued
     end
   end
 end
