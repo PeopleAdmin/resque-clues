@@ -22,6 +22,7 @@ module Resque
 
         def pop(queue)
           _base_pop(queue).tap do |item|
+            return item unless item[:metadata]
             item[:metadata][:hostname] = hostname
             item[:metadata][:process] = $$
             item[:metadata][:time_in_queue] = time_delta_since(item[:metadata][:enqueued_time])

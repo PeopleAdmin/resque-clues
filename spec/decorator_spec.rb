@@ -66,6 +66,13 @@ describe Resque::Plugins::Clues::QueueDecorator do
       Resque.pop(:test_queue).nil?.should == false
     end
 
+    context "retrieving an item without metadata" do
+      it "should invoke _base_pop with a queue arg and return the result" do
+        Resque.stub(:_base_pop) {|queue| {}}
+        Resque.pop(:test_queue).should == {}
+      end
+    end
+
     context "metadata in the item retrieved from redis" do
       before do 
         Resque.stub(:_base_pop){{metadata: {}}}
