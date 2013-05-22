@@ -48,6 +48,12 @@ describe Resque::Plugins::Clues::QueueDecorator do
         validate {|queue, item| item[:metadata][:process].should == $$}
         Resque.push(:test_queue, {})
       end
+
+      it "should allow an item_preprocessor to inject arbitrary data" do
+        Resque.item_preprocessor = proc {|queue, item| item[:metadata][:employer_id] = 1}
+        validate {|queue, item| item[:metadata][:employer_id].should == 1}
+        Resque.push(:test_queue, {})
+      end
     end
   end
 
@@ -55,9 +61,27 @@ describe Resque::Plugins::Clues::QueueDecorator do
     it "should invoke _base_pop with a queue arg and return the result" do
       Resque.stub(:_base_pop) do |queue|
         queue.should == :test_queue
-        "received"
+        {metadata: {}}
       end
-      Resque.pop(:test_queue).should == "received"
+      Resque.pop(:test_queue).nil?.should == false
+    end
+
+    context "metadata in the item retrieved from redis" do
+      before do 
+        Resque.stub(:_base_pop){{metadata: {}}}
+      end
+
+      it "should contain the hostname" do
+        Resque.pop(:test_queue)[:metadata][:hostname].should == `hostname`.chop
+      end
+
+      it "should contain the process id" do
+        Resque.pop(:test_queue)[:metadata][:process].should == $$
+      end
+
+      it "should contain an enqueued_time" do
+        Resque.pop(:test_queue)[:metadata][:time_in_queue].nil?.should == false
+      end
     end
   end
 end

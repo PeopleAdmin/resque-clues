@@ -1,22 +1,34 @@
 require 'digest/md5'
+require 'time'
 
 module Resque
   module Plugins
     module Clues
       module QueueDecorator
         include Resque::Plugins::Clues::EventHashable
+        attr_accessor :event_publisher
 
         def push(queue, item)
           item[:metadata] = {
             event_hash: event_hash,
             hostname: hostname,
-            process: process
+            process: process,
+            enqueued_time: Time.now.utc.to_f
           }
           _base_push(queue, item)
         end
 
         def pop(queue)
-          _base_pop(queue)
+          _base_pop(queue).tap do |item|
+            item[:metadata][:hostname] = hostname
+            item[:metadata][:process] = $$
+            item[:metadata][:time_in_queue] = time_delta_since(item[:metadata][:enqueued_time])
+          end
+        end
+
+        private
+        def time_delta_since(start)
+          start.to_f - Time.now.utc.to_f
         end
 
         def self.extended(klass)
