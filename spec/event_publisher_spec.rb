@@ -2,19 +2,25 @@ require 'spec_helper'
 require 'stringio'
 require 'json'
 require 'fileutils'
+require 'time'
 
 describe Resque::Plugins::Clues::EventPublisher do
   it "should pass Resque lint detection" do
     Resque::Plugin.lint(Resque::Plugins::Clues::EventPublisher)
   end
 
+  before do
+    @current_time = Time.new.utc.iso8601
+  end
+
   def publish_event_type(type)
-    @publisher.send(type, :test_queue, {}, "FooBar", "a", "b")
+    @publisher.send(type, @current_time, :test_queue, {}, "FooBar", "a", "b")
   end
 
   describe Resque::Plugins::Clues::EventPublisher::StandardOut do
     def verify_output_for_event_type(type)
       STDOUT.should_receive(:puts).with event_type: type.to_s,
+                                        timestamp: @current_time,
                                         queue: :test_queue,
                                         metadata: {},
                                         worker_class: "FooBar",
@@ -60,6 +66,7 @@ describe Resque::Plugins::Clues::EventPublisher do
   describe Resque::Plugins::Clues::EventPublisher::Log do
     def verify_event_written_to_log(event_type)
       last_event["event_type"].should == event_type.to_s
+      last_event["timestamp"].should == @current_time.to_s
       last_event["queue"].should == 'test_queue'
       last_event["metadata"].should == {}
       last_event["worker_class"].should == "FooBar"
@@ -116,7 +123,8 @@ describe Resque::Plugins::Clues::EventPublisher do
 
     def verify_event_delegated_to_children(event_type)
       @publisher.each do |child|
-        child.should_receive(event_type).with(:test_queue, {}, "FooBar", "a", "b")
+        child.should_receive(event_type).with(
+          @current_time, :test_queue, {}, "FooBar", "a", "b")
       end
     end
 

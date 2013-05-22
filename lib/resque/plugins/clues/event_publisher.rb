@@ -18,9 +18,10 @@ module Resque
         # Event publisher base class with shared logic between all publishers.
         class Base
           private
-          def build_hash(event_type, queue, metadata, worker_class, args)
+          def build_hash(event_type, timestamp, queue, metadata, worker_class, args)
             {
               event_type: event_type,
+              timestamp: timestamp,
               queue: queue,
               metadata: metadata,
               worker_class: worker_class,
@@ -33,8 +34,8 @@ module Resque
         # format.
         class StandardOut < Base
           EVENT_TYPES.each do |event_type|
-            define_method(event_type) do |queue, metadata, klass, *args|
-              puts(build_hash(event_type, queue, metadata, klass, args))
+            define_method(event_type) do |timestamp, queue, metadata, klass, *args|
+              puts(build_hash(event_type, timestamp, queue, metadata, klass, args))
             end
           end
         end
@@ -50,8 +51,9 @@ module Resque
           end
 
           EVENT_TYPES.each do |event_type|
-            define_method(event_type) do |queue, metadata, klass, *args|
-              logger.info(build_hash(event_type, queue, metadata, klass, args).to_json)
+            define_method(event_type) do |timestamp, queue, metadata, klass, *args|
+              logger.info(build_hash(
+                event_type, timestamp, queue, metadata, klass, args).to_json)
             end
           end
         end
@@ -65,9 +67,11 @@ module Resque
           end
 
           EVENT_TYPES.each do |event_type|
-            define_method(event_type) do |queue, metadata, klass, *args|
+            define_method(event_type) do |timestamp, queue, metadata, klass, *args|
               each do |child|
-                child.send(event_type, queue, metadata, klass, *args) rescue error(event_type, child)
+                child.send(
+                  event_type, timestamp, queue, metadata, klass, *args
+                ) rescue error(event_type, child)
               end
             end
           end
