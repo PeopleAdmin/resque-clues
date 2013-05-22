@@ -4,6 +4,8 @@ module Resque
   module Plugins
     module Clues
       module QueueDecorator
+        include Resque::Plugins::Clues::EventHashable
+
         def push(queue, item)
           item[:metadata] = {
             event_hash: event_hash
@@ -13,23 +15,6 @@ module Resque
 
         def pop(queue)
           _base_pop(queue)
-        end
-
-        private
-        def event_hash
-          Digest::MD5.hexdigest("#{hostname}#{process}#{time}")
-        end
-
-        def hostname
-          `hostname`.chop
-        end
-
-        def process
-          $$
-        end
-
-        def time
-          Time.new.utc.to_f
         end
 
         def self.extended(klass)
