@@ -18,8 +18,14 @@ describe Resque::Plugins::Clues::QueueDecorator do
   end
 
   describe "#push" do
-    it "should invoke _base_push with a queue and item args and return the result" do 
+    def validate
       Resque.stub(:_base_push) do |queue, item|
+        yield(queue, item)
+      end
+    end
+
+    it "should invoke _base_push with a queue and item args and return the result" do 
+      validate do |queue, item|
         queue.should == :test_queue
         item.nil?.should == false
         "received"
@@ -27,11 +33,19 @@ describe Resque::Plugins::Clues::QueueDecorator do
       Resque.push(:test_queue, {}).should == "received"
     end
 
-    context "adds metadata to item stored in redis" do
+    context "adds metadata to item stored in redis that" do
       it "should contain an event_hash identifying the job entering the queue" do
-        Resque.stub(:_base_push) do |queue, item|
-          item[:metadata][:event_hash].nil?.should == false
-        end
+        validate {|queue, item| item[:metadata][:event_hash].nil?.should == false}
+        Resque.push(:test_queue, {})
+      end
+
+      it "should contain the host's hostname" do
+        validate {|queue, item| item[:metadata][:hostname].should == `hostname`.strip}
+        Resque.push(:test_queue, {})
+      end
+
+      it "should contain the process id" do
+        validate {|queue, item| item[:metadata][:process].should == $$}
         Resque.push(:test_queue, {})
       end
     end

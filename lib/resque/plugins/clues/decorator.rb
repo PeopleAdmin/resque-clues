@@ -8,7 +8,9 @@ module Resque
 
         def push(queue, item)
           item[:metadata] = {
-            event_hash: event_hash
+            event_hash: event_hash,
+            hostname: hostname,
+            process: process
           }
           _base_push(queue, item)
         end
