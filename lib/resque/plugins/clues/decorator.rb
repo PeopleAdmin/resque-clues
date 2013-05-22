@@ -7,6 +7,7 @@ module Resque
       module QueueDecorator
         include Resque::Plugins::Clues::EventHashable
         attr_accessor :event_publisher
+        attr_accessor :item_preprocessor
 
         def push(queue, item)
           item[:metadata] = {
@@ -15,6 +16,7 @@ module Resque
             process: process,
             enqueued_time: Time.now.utc.to_f
           }
+          item_preprocessor.call(queue, item) if item_preprocessor 
           _base_push(queue, item)
         end
 
