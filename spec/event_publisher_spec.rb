@@ -160,7 +160,7 @@ describe Resque::Plugins::Clues::EventPublisher do
 
     it "all children should be invoked when the first child throws an exception" do
       @publisher[0].stub(:enqueued) {raise 'YOU SHALL NOT PASS'}
-      verify_event_delegated_to_children :enqueued 
+      verify_event_delegated_to_children :enqueued
       publish_event_type :enqueued
     end
   end

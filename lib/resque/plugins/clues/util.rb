@@ -4,6 +4,10 @@ module Resque
   module Plugins
     module Clues
       module Util
+        def now
+          Time.new.utc.iso8601
+        end
+
         def symbolize(hash)
           hash.inject({}) do |memo, kv|
             memo.tap do

@@ -19,4 +19,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'resque', '>= 1.20.0'
   gem.add_development_dependency 'rspec'
   gem.add_development_dependency 'pry'
+  gem.add_development_dependency 'pry-debugger'
+  gem.add_development_dependency 'cane'
 end

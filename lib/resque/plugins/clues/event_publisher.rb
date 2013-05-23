@@ -1,4 +1,5 @@
 require 'pp'
+require 'delegate'
 
 module Resque
   module Plugins
