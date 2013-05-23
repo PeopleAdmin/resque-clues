@@ -53,7 +53,7 @@ describe Resque::Plugins::Clues::QueueDecorator do
   end
 
   context "with event_publisher configured" do
-    before {Resque.event_publisher = Resque::Plugins::Clues::EventPublisher::StandardOut.new}
+    before {Resque.event_publisher = Resque::Plugins::Clues::StandardOutPublisher.new}
 
     describe "#push" do
       it "should invoke _base_push with a queue and item args and return the result" do

@@ -4,10 +4,7 @@ require 'json'
 require 'fileutils'
 require 'time'
 
-describe Resque::Plugins::Clues::EventPublisher do
-  it "should pass Resque lint detection" do
-    Resque::Plugin.lint(Resque::Plugins::Clues::EventPublisher)
-  end
+describe 'event publishers' do
 
   before do
     @current_time = Time.new.utc.iso8601
@@ -17,7 +14,7 @@ describe Resque::Plugins::Clues::EventPublisher do
     @publisher.send(type, @current_time, :test_queue, {}, "FooBar", "a", "b")
   end
 
-  describe Resque::Plugins::Clues::EventPublisher::StandardOut do
+  describe Resque::Plugins::Clues::StandardOutPublisher do
     def verify_output_for_event_type(type)
       STDOUT.should_receive(:puts).with event_type: type.to_s,
                                         timestamp: @current_time,
@@ -28,8 +25,13 @@ describe Resque::Plugins::Clues::EventPublisher do
     end
 
     before do
-      @publisher = Resque::Plugins::Clues::EventPublisher::StandardOut.new
+      @publisher = Resque::Plugins::Clues::StandardOutPublisher.new
     end
+
+
+  it "should pass Resque lint detection" do
+    Resque::Plugin.lint(Resque::Plugins::Clues::StandardOutPublisher)
+  end
 
     it "should send enqueued event to STDOUT" do
       verify_output_for_event_type :enqueued
@@ -63,7 +65,7 @@ describe Resque::Plugins::Clues::EventPublisher do
   end
 
 
-  describe Resque::Plugins::Clues::EventPublisher::Log do
+  describe Resque::Plugins::Clues::LogPublisher do
     def verify_event_written_to_log(event_type)
       last_event["event_type"].should == event_type.to_s
       last_event["timestamp"].should == @current_time.to_s
@@ -80,7 +82,11 @@ describe Resque::Plugins::Clues::EventPublisher do
     before do
       @log_path = File.join(Dir.tmpdir, "test_log.log")
       FileUtils.rm(@log_path)
-      @publisher = Resque::Plugins::Clues::EventPublisher::Log.new(@log_path)
+      @publisher = Resque::Plugins::Clues::LogPublisher.new(@log_path)
+    end
+
+    it "should pass Resque lint detection" do
+      Resque::Plugin.lint(Resque::Plugins::Clues::LogPublisher)
     end
 
     it "should write enqueued event to file" do
@@ -114,11 +120,11 @@ describe Resque::Plugins::Clues::EventPublisher do
     end
   end
 
-  describe Resque::Plugins::Clues::EventPublisher::Composite do
+  describe Resque::Plugins::Clues::CompositePublisher do
     before do
-      @publisher = Resque::Plugins::Clues::EventPublisher::Composite.new
-      @publisher << Resque::Plugins::Clues::EventPublisher::StandardOut.new
-      @publisher << Resque::Plugins::Clues::EventPublisher::StandardOut.new
+      @publisher = Resque::Plugins::Clues::CompositePublisher.new
+      @publisher << Resque::Plugins::Clues::StandardOutPublisher.new
+      @publisher << Resque::Plugins::Clues::StandardOutPublisher.new
     end
 
     def verify_event_delegated_to_children(event_type)
@@ -126,6 +132,10 @@ describe Resque::Plugins::Clues::EventPublisher do
         child.should_receive(event_type).with(
           @current_time, :test_queue, {}, "FooBar", "a", "b")
       end
+    end
+
+    it "should pass Resque lint detection" do
+      Resque::Plugin.lint(Resque::Plugins::Clues::CompositePublisher)
     end
 
     it "should delegate enqueued event to children" do

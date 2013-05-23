@@ -19,7 +19,7 @@ module Resque
             process: process,
             enqueued_time: Time.now.utc.to_f
           }
-          item_preprocessor.call(queue, item) if item_preprocessor 
+          item_preprocessor.call(queue, item) if item_preprocessor
           event_publisher.enqueued(now, queue, item[:metadata], item[:class], *item[:args])
           _base_push(queue, item)
         end
