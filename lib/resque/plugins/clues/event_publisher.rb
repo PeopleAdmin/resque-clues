@@ -2,6 +2,8 @@ require 'pp'
 require 'delegate'
 
 module Resque
+  attr_accessor :event_publisher
+
   module Plugins
     module Clues
       EVENT_TYPES = %w[enqueued dequeued destroyed perform_started perform_finished failed]

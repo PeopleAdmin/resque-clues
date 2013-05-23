@@ -1,28 +1,24 @@
 require 'spec_helper'
 
+def base_item(overrides={})
+  {"class" => TestWorker.to_s, "args" => [1,2]}.merge!(overrides)
+end
+
 describe Resque::Plugins::Clues::QueueDecorator do
-  def base_item(overrides={})
-    {"class" => "TestWorker", "args" => [1,2].to_s}.merge!(overrides)
-  end
+  before {Resque.event_publisher = nil}
 
   def publishes(evt_type)
-    Resque.event_publisher.stub(evt_type) do |time, queue, metadata, klass, args|
+    Resque.event_publisher.stub(evt_type) do |time, queue, metadata, klass, *args|
       time.nil?.should == false
       queue.should == :test_queue
       klass.should == 'TestWorker'
-      args.should == [1,2].to_s
+      args.should == [1,2]
       yield(metadata)
     end
   end
 
   it "should pass Resque lint detection" do
     Resque::Plugin.lint(Resque::Plugins::Clues::QueueDecorator)
-  end
-
-  before do
-    Resque.send(:alias_method, :_base_push, :push)
-    Resque.send(:alias_method, :_base_pop, :pop)
-    Resque.send(:extend, Resque::Plugins::Clues::QueueDecorator)
   end
 
   it "should expose original push method as _base_push" do
@@ -33,7 +29,7 @@ describe Resque::Plugins::Clues::QueueDecorator do
     Resque.respond_to?(:_base_pop).should == true
   end
 
-  context "with no event_publisher configured" do
+  context "with clues not configured" do
     describe "#push" do
       it "should delegate directly to original Resque push method" do
         Resque.should_receive(:_base_push).with(:test_queue, {})
@@ -52,7 +48,7 @@ describe Resque::Plugins::Clues::QueueDecorator do
     end
   end
 
-  context "with event_publisher configured" do
+  context "with clues properly configured" do
     before {Resque.event_publisher = Resque::Plugins::Clues::StandardOutPublisher.new}
 
     describe "#push" do
@@ -61,7 +57,7 @@ describe Resque::Plugins::Clues::QueueDecorator do
         Resque.stub(:_base_push) do |queue, item|
           queue.should == :test_queue
           item[:class].should == "TestWorker"
-          item[:args].should == [1,2].to_s
+          item[:args].should == [1,2]
           "received"
         end
         Resque.push(:test_queue, base_item).should == "received"
@@ -128,6 +124,55 @@ describe Resque::Plugins::Clues::QueueDecorator do
           publishes(:dequeued) {|metadata| metadata[:time_in_queue].nil?.should == false}
           Resque.pop(:test_queue)
         end
+      end
+    end
+  end
+end
+
+describe Resque::Plugins::Clues::JobDecorator do
+  before do
+    Resque.event_publisher = nil
+    @job = Resque::Job.new(:test_queue, base_item(metadata: {}))
+  end
+
+  it "should pass Resque lint detection" do
+    Resque::Plugin.lint(Resque::Plugins::Clues::JobDecorator)
+  end
+
+  context "with clues not configured" do
+    describe "#perform" do
+      it "should delegate to original perform" do
+        @job.should_receive(:_base_perform)
+        @job.perform
+      end
+    end
+  end
+
+  context "with clues configured" do
+    def publishes(evt_type)
+      Resque.event_publisher.should_receive(evt_type)
+      Resque.event_publisher.stub(evt_type) do |time, queue, metadata, klass, *args|
+        time.nil?.should == false
+        queue.should == :test_queue
+        klass.should == 'TestWorker'
+        args.should == [1,2]
+        yield(metadata) if block_given?
+      end
+    end
+
+    before {Resque.event_publisher = Resque::Plugins::Clues::StandardOutPublisher.new}
+
+    describe "#perform" do
+      it "should publish a perform_started event" do
+        publishes(:perform_started)
+        @job.perform
+      end
+
+      it "should publish a perform_finished event that includes the time_to_perform" do
+        publishes(:perform_finished) do |metadata|
+          metadata[:time_to_perform].nil?.should == false
+        end
+        @job.perform
       end
     end
   end

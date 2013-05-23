@@ -8,7 +8,13 @@ module Resque
           Time.new.utc.iso8601
         end
 
+        def time_delta_since(start)
+          start.to_f - Time.now.utc.to_f
+        end
+
         def symbolize(hash)
+          # resque is not rails dependent, so avoiding dependency just for
+          # symbolize_keys!
           hash.inject({}) do |memo, kv|
             memo.tap do
               if kv[1].instance_of? Hash
