@@ -10,7 +10,7 @@ module Resque
         attr_accessor :item_preprocessor
 
         def push(queue, orig)
-          return _base_push(queue, orig) unless Resque.clues_configured?
+          return _base_push(queue, orig) unless clues_configured?
           item = symbolize(orig)
           item[:metadata] = {
             event_hash: event_hash,
@@ -19,18 +19,18 @@ module Resque
             enqueued_time: Time.now.utc.to_f
           }
           item_preprocessor.call(queue, item) if item_preprocessor
-          Resque.event_publisher.enqueued(now, queue, item[:metadata], item[:class], *item[:args])
+          event_publisher.enqueued(now, queue, item[:metadata], item[:class], *item[:args])
           _base_push(queue, item)
         end
 
         def pop(queue)
           _base_pop(queue).tap do |orig|
             item = symbolize(orig)
-            return orig unless Resque.clues_configured? and item[:metadata]
+            return orig unless clues_configured? and item[:metadata]
             item[:metadata][:hostname] = hostname
             item[:metadata][:process] = $$
             item[:metadata][:time_in_queue] = time_delta_since(item[:metadata][:enqueued_time])
-            Resque.event_publisher.dequeued(now, queue, item[:metadata], item[:class], *item[:args])
+            event_publisher.dequeued(now, queue, item[:metadata], item[:class], *item[:args])
           end
         end
       end
@@ -46,26 +46,26 @@ module Resque
         private
         def self.define_perform(klass)
           klass.send(:define_method, :perform) do
-            return _base_perform unless Resque.clues_configured?
+            return _base_perform unless clues_configured?
             item = symbolize(payload)
-            Resque.event_publisher.perform_started(now, queue, item[:metadata], item[:class], *item[:args])
+            event_publisher.perform_started(now, queue, item[:metadata], item[:class], *item[:args])
             @perform_started = Time.now
             _base_perform.tap do
               item[:metadata][:time_to_perform] = time_delta_since(@perform_started)
-              Resque.event_publisher.perform_finished(now, queue, item[:metadata], item[:class], *item[:args])
+              event_publisher.perform_finished(now, queue, item[:metadata], item[:class], *item[:args])
             end
           end
         end
 
         def self.define_failed(klass)
           klass.send(:define_method, :fail) do |exception|
-            return _base_fail(exception) unless Resque.clues_configured?
+            return _base_fail(exception) unless clues_configured?
             item = symbolize(payload)
             item[:metadata][:time_to_perform] = time_delta_since(@perform_started)
             item[:metadata][:exception] = exception.class
             item[:metadata][:message] = exception.message
             item[:metadata][:backtrace] = exception.backtrace
-            Resque.event_publisher.failed(now, queue, item[:metadata], item[:class], *item[:args])
+            event_publisher.failed(now, queue, item[:metadata], item[:class], *item[:args])
           end
         end
       end

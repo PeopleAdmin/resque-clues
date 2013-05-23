@@ -12,6 +12,14 @@ module Resque
           start.to_f - Time.now.utc.to_f
         end
 
+        def clues_configured?
+          Resque::Plugins::Clues.configured?
+        end
+
+        def event_publisher
+          Resque::Plugins::Clues.event_publisher
+        end
+
         def symbolize(hash)
           # resque is not rails dependent, so avoiding dependency just for
           # symbolize_keys!

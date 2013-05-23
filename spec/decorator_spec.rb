@@ -5,10 +5,10 @@ def base_item(overrides={})
 end
 
 describe Resque::Plugins::Clues::QueueDecorator do
-  before {Resque.event_publisher = nil}
+  before {Resque::Plugins::Clues.event_publisher = nil}
 
   def publishes(evt_type)
-    Resque.event_publisher.stub(evt_type) do |time, queue, metadata, klass, *args|
+    Resque::Plugins::Clues.event_publisher.stub(evt_type) do |time, queue, metadata, klass, *args|
       time.nil?.should == false
       queue.should == :test_queue
       klass.should == 'TestWorker'
@@ -49,7 +49,9 @@ describe Resque::Plugins::Clues::QueueDecorator do
   end
 
   context "with clues properly configured" do
-    before {Resque.event_publisher = Resque::Plugins::Clues::StandardOutPublisher.new}
+    before do
+      Resque::Plugins::Clues.event_publisher = Resque::Plugins::Clues::StandardOutPublisher.new
+    end
 
     describe "#push" do
       it "should invoke _base_push with a queue and item args and return the result" do
@@ -131,7 +133,7 @@ end
 
 describe Resque::Plugins::Clues::JobDecorator do
   before do
-    Resque.event_publisher = nil
+    Resque::Plugins::Clues.event_publisher = nil
     @job = Resque::Job.new(:test_queue, base_item(metadata: {}))
   end
 
@@ -157,8 +159,8 @@ describe Resque::Plugins::Clues::JobDecorator do
 
   context "with clues configured" do
     def publishes(evt_type)
-      Resque.event_publisher.should_receive(evt_type)
-      Resque.event_publisher.stub(evt_type) do |time, queue, metadata, klass, *args|
+      Resque::Plugins::Clues.event_publisher.should_receive(evt_type)
+      Resque::Plugins::Clues.event_publisher.stub(evt_type) do |time, queue, metadata, klass, *args|
         time.nil?.should == false
         queue.should == :test_queue
         klass.should == 'TestWorker'
@@ -167,7 +169,9 @@ describe Resque::Plugins::Clues::JobDecorator do
       end
     end
 
-    before {Resque.event_publisher = Resque::Plugins::Clues::StandardOutPublisher.new}
+    before do
+      Resque::Plugins::Clues.event_publisher = Resque::Plugins::Clues::StandardOutPublisher.new
+    end
 
     describe "#perform" do
       it "should publish a perform_started event" do

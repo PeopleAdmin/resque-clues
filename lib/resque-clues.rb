@@ -6,8 +6,12 @@ require 'resque/plugins/clues/event_publisher'
 require 'resque/plugins/clues/version'
 
 module Resque
-  def self.clues_configured?
-    !self.event_publisher.nil?
+  module Plugins
+    module Clues
+      def self.configured?
+        !self.event_publisher.nil?
+      end
+    end
   end
 end
 

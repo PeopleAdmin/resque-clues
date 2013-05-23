@@ -2,10 +2,11 @@ require 'pp'
 require 'delegate'
 
 module Resque
-  attr_accessor :event_publisher
-
   module Plugins
     module Clues
+      class << self
+        attr_accessor :event_publisher
+      end
       EVENT_TYPES = %w[enqueued dequeued destroyed perform_started perform_finished failed]
 
       # Event publisher base class with shared logic between all publishers.
