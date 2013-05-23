@@ -146,6 +146,13 @@ describe Resque::Plugins::Clues::JobDecorator do
         @job.perform
       end
     end
+
+    describe "#fail" do
+      it "should delegate to original fail" do
+        @job.should_receive(:_base_fail)
+        @job.fail(Exception.new)
+      end
+    end
   end
 
   context "with clues configured" do
@@ -173,6 +180,47 @@ describe Resque::Plugins::Clues::JobDecorator do
           metadata[:time_to_perform].nil?.should == false
         end
         @job.perform
+      end
+    end
+
+    describe "#fail" do
+      it "should publish a perform_failed event" do
+        publishes(:failed)
+        @job.fail(Exception.new)
+      end
+
+      context "includes metadata in the perform_failed event that should" do
+        it "should include the time_to_perform" do
+          publishes(:failed) do |metadata|
+            metadata[:time_to_perform].nil?.should == false
+          end
+          @job.fail(Exception.new)
+        end
+
+        it "should include the exception class" do
+          publishes(:failed) do |metadata|
+            metadata[:exception].should == Exception
+          end
+          @job.fail(Exception.new)
+        end
+
+        it "should include the exception message" do
+          publishes(:failed) do |metadata|
+            metadata[:message].should == 'test'
+          end
+          @job.fail(Exception.new('test'))
+        end
+
+        it "should include the exception backtrace" do
+          begin
+            raise 'test'
+          rescue => e
+            publishes(:failed) do |metadata|
+              metadata[:backtrace].nil?.should == false
+            end
+            @job.fail(e)
+          end
+        end
       end
     end
   end

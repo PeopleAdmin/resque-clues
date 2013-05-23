@@ -40,6 +40,7 @@ module Resque
 
         def self.included(klass)
           define_perform(klass)
+          define_failed(klass)
         end
 
         private
@@ -53,6 +54,18 @@ module Resque
               item[:metadata][:time_to_perform] = time_delta_since(@perform_started)
               Resque.event_publisher.perform_finished(now, queue, item[:metadata], item[:class], *item[:args])
             end
+          end
+        end
+
+        def self.define_failed(klass)
+          klass.send(:define_method, :fail) do |exception|
+            return _base_fail(exception) unless Resque.clues_configured?
+            item = symbolize(payload)
+            item[:metadata][:time_to_perform] = time_delta_since(@perform_started)
+            item[:metadata][:exception] = exception.class
+            item[:metadata][:message] = exception.message
+            item[:metadata][:backtrace] = exception.backtrace
+            Resque.event_publisher.failed(now, queue, item[:metadata], item[:class], *item[:args])
           end
         end
       end
