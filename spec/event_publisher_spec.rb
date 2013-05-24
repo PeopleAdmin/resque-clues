@@ -3,6 +3,7 @@ require 'stringio'
 require 'json'
 require 'fileutils'
 require 'time'
+require 'tmpdir'
 
 describe 'event publishers' do
 
@@ -81,7 +82,7 @@ describe 'event publishers' do
 
     before do
       @log_path = File.join(Dir.tmpdir, "test_log.log")
-      FileUtils.rm(@log_path)
+      FileUtils.rm(@log_path) if File.exists?(@log_path)
       @publisher = Resque::Plugins::Clues::LogPublisher.new(@log_path)
     end
 
