@@ -13,6 +13,11 @@ releases, etc...
 * Provide searchability for specific jobs entering the queue to aid in
   debugging or support efforts.
 
+Coupled with those tools, it will enable you to create views into your
+background processes like the following:
+
+![splunk dashboard](http://i.imgur.com/avxId1e.png)
+
 ## Lifecycle events
 
 Four lifecycle events will be published for each job entering a queue:
