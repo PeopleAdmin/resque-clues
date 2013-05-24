@@ -7,7 +7,6 @@ module Resque
       module QueueDecorator
         include Resque::Plugins::Clues::Util
         include Resque::Plugins::Clues::EventHashable
-        attr_accessor :item_preprocessor
 
         def push(queue, orig)
           return _base_push(queue, orig) unless clues_configured?
@@ -18,7 +17,9 @@ module Resque
             process: process,
             enqueued_time: Time.now.utc.to_f
           }
-          item_preprocessor.call(queue, item) if item_preprocessor
+          if Resque::Plugins::Clues.item_preprocessor
+            Resque::Plugins::Clues.item_preprocessor.call(queue, item) 
+          end
           event_publisher.enqueued(now, queue, item[:metadata], item[:class], *item[:args])
           _base_push(queue, item)
         end

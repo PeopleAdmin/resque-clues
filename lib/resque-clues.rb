@@ -8,8 +8,12 @@ require 'resque/plugins/clues/version'
 module Resque
   module Plugins
     module Clues
-      def self.configured?
-        !self.event_publisher.nil?
+      class << self
+        attr_accessor :item_preprocessor
+
+        def configured?
+          !event_publisher.nil?
+        end
       end
     end
   end

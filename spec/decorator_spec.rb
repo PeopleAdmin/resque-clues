@@ -82,7 +82,7 @@ describe Resque::Plugins::Clues::QueueDecorator do
         end
 
         it "should allow an item_preprocessor to inject arbitrary data" do
-          Resque.item_preprocessor = proc {|queue, item| item[:metadata][:employer_id] = 1}
+          Resque::Plugins::Clues.item_preprocessor = proc {|queue, item| item[:metadata][:employer_id] = 1}
           publishes(:enqueued) {|metadata| metadata[:employer_id].should == 1}
           Resque.push(:test_queue, base_item)
         end
