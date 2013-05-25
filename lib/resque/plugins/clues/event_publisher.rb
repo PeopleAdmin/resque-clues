@@ -41,7 +41,7 @@ module Resque
 
         def initialize(log_path, formatter=nil)
           @logger = Logger.new(log_path)
-          @logger.formatter = formatter || lambda{|s, d, p, msg| msg}
+          @logger.formatter = formatter || lambda{|s, d, p, msg| "#{msg}\n"}
         end
 
         EVENT_TYPES.each do |event_type|

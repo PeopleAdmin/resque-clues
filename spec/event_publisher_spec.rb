@@ -77,7 +77,7 @@ describe 'event publishers' do
     end
 
     def last_event
-      JSON.parse(File.readlines(@log_path)[-1])
+      JSON.parse(File.readlines(@log_path)[-1].chomp)
     end
 
     before do
@@ -118,6 +118,12 @@ describe 'event publishers' do
     it "should write failed event to file" do
       publish_event_type :failed
       verify_event_written_to_log :failed
+    end
+
+    it "should write 1 event per line in the file" do
+      publish_event_type :enqueued
+      publish_event_type :dequeued
+      File.readlines(@log_path)[1..-1].size.should == 2
     end
   end
 
