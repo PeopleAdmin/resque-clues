@@ -1,3 +1,0 @@
-* Add newline at end of log format
-* Allow StandardOutLogger to have STDOUT overriden for testing purposes.
-* Lightweight integration test of clues in hr_suite.
