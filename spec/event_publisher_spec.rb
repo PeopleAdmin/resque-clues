@@ -15,53 +15,56 @@ describe 'event publishers' do
     @publisher.send(type, @current_time, :test_queue, {}, "FooBar", "a", "b")
   end
 
-  describe Resque::Plugins::Clues::StandardOutPublisher do
+  describe Resque::Plugins::Clues::StreamPublisher do
+    before do
+      @stream = StreamIO.new
+      @publisher = Resque::Plugins::Clues::StreamPublisher.new(@stream)
+    end
+  end
+
+  describe Resque::Plugins::Clues::StreamPublisher do
     def verify_output_for_event_type(type)
-      STDOUT.should_receive(:puts).with event_type: type.to_s,
-                                        timestamp: @current_time,
-                                        queue: :test_queue,
-                                        metadata: {},
-                                        worker_class: "FooBar",
-                                        args: ["a", "b"]
+      @stream.rewind
+      event = JSON.parse(@stream.readlines[-1].chomp)
     end
 
     before do
-      @publisher = Resque::Plugins::Clues::StandardOutPublisher.new
+      @stream = StringIO.new
+      @publisher = Resque::Plugins::Clues::StreamPublisher.new(@stream)
     end
 
-
-  it "should pass Resque lint detection" do
-    Resque::Plugin.lint(Resque::Plugins::Clues::StandardOutPublisher)
-  end
+    it "should pass Resque lint detection" do
+      Resque::Plugin.lint(Resque::Plugins::Clues::StandardOutPublisher)
+    end
 
     it "should send enqueued event to STDOUT" do
-      verify_output_for_event_type :enqueued
       publish_event_type :enqueued
+      verify_output_for_event_type :enqueued
     end
 
     it "should send dequeued event to STDOUT" do
-      verify_output_for_event_type :dequeued
       publish_event_type :dequeued
+      verify_output_for_event_type :dequeued
     end
 
     it "should send perform_started event to STDOUT" do
-      verify_output_for_event_type :perform_started
       publish_event_type :perform_started
+      verify_output_for_event_type :perform_started
     end
 
     it "should send perform_finished event to STDOUT" do
-      verify_output_for_event_type :perform_finished
       publish_event_type :perform_finished
+      verify_output_for_event_type :perform_finished
     end
 
     it "should send failed event to STDOUT" do
-      verify_output_for_event_type :failed
       publish_event_type :failed
+      verify_output_for_event_type :failed
     end
 
     it "should send destroyed event to STDOUT" do
-      verify_output_for_event_type :destroyed
       publish_event_type :destroyed
+      verify_output_for_event_type :destroyed
     end
   end
 

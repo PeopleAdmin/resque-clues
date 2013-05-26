@@ -24,13 +24,30 @@ module Resque
         end
       end
 
-      # Event publisher that publishes events to standard output in a json
-      # format.
-      class StandardOutPublisher < Base
+      # Event publisher that publishes events to a file-like stream in a JSON
+      # format.  Each message is punctuated with a terminus character, which
+      # defaults to newline ("\n")
+      class StreamPublisher < Base
+        attr_reader :stream, :terminus
+
+        def initialize(stream, terminus="\n")
+          @stream = stream
+          @terminus = terminus
+        end
+
         EVENT_TYPES.each do |event_type|
           define_method(event_type) do |timestamp, queue, metadata, klass, *args|
-            puts(build_hash(event_type, timestamp, queue, metadata, klass, args))
+            event = build_hash(event_type, timestamp, queue, metadata, klass, args)
+            stream.write("#{event.to_json}#{terminus}")
           end
+        end
+      end
+
+      # Event publisher that publishes events to standard output in a json
+      # format.
+      class StandardOutPublisher < StreamPublisher
+        def initialize
+          super(STDOUT)
         end
       end
 
