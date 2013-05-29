@@ -26,6 +26,12 @@ describe 'event publishers' do
     def verify_output_for_event_type(type)
       @stream.rewind
       event = JSON.parse(@stream.readlines[-1].chomp)
+      event["queue"].should == "test_queue"
+      event["metadata"].should == {}
+      event["timestamp"].should_not be_nil
+      event["event_type"].should == type.to_s
+      event["worker_class"].should == "FooBar"
+      event["args"].should == ["a", "b"]
     end
 
     before do
