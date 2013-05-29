@@ -193,6 +193,11 @@ describe Resque::Plugins::Clues::JobDecorator do
         @job.fail(Exception.new)
       end
 
+      it "should delegate to original fail" do
+        @job.should_receive(:_base_fail)
+        @job.fail(Exception.new)
+      end
+
       context "includes metadata in the perform_failed event that should" do
         it "should include the time_to_perform" do
           publishes(:failed) do |metadata|

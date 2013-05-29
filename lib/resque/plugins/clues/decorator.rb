@@ -60,13 +60,16 @@ module Resque
 
         def self.define_failed(klass)
           klass.send(:define_method, :fail) do |exception|
-            return _base_fail(exception) unless clues_configured?
-            item = symbolize(payload)
-            item[:metadata][:time_to_perform] = time_delta_since(@perform_started)
-            item[:metadata][:exception] = exception.class
-            item[:metadata][:message] = exception.message
-            item[:metadata][:backtrace] = exception.backtrace
-            event_publisher.failed(now, queue, item[:metadata], item[:class], *item[:args])
+            _base_fail(exception).tap do
+              if clues_configured?
+                item = symbolize(payload)
+                item[:metadata][:time_to_perform] = time_delta_since(@perform_started)
+                item[:metadata][:exception] = exception.class
+                item[:metadata][:message] = exception.message
+                item[:metadata][:backtrace] = exception.backtrace
+                event_publisher.failed(now, queue, item[:metadata], item[:class], *item[:args])
+              end
+            end
           end
         end
       end
