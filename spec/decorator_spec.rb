@@ -99,6 +99,14 @@ describe Resque::Plugins::Clues::QueueDecorator do
         Resque.pop(:test_queue).should == result
       end
 
+      context "when nothing is in the queue" do
+        it "should not die horribly" do
+          # TODO this shouldn't delete all keys in redis.
+          Resque.redis.flushall
+          expect{Resque.pop(:test_queue)}.to_not raise_error
+        end
+      end
+
       context "when retrieving an item without metadata" do
         it "should delegate directly to _base_pop" do
           result = base_item

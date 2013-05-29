@@ -26,12 +26,14 @@ module Resque
 
         def pop(queue)
           _base_pop(queue).tap do |orig|
-            item = symbolize(orig)
-            return orig unless clues_configured? and item[:metadata]
-            item[:metadata][:hostname] = hostname
-            item[:metadata][:process] = $$
-            item[:metadata][:time_in_queue] = time_delta_since(item[:metadata][:enqueued_time])
-            event_publisher.dequeued(now, queue, item[:metadata], item[:class], *item[:args])
+            unless orig.nil?
+              item = symbolize(orig)
+              return orig unless clues_configured? and item[:metadata]
+              item[:metadata][:hostname] = hostname
+              item[:metadata][:process] = $$
+              item[:metadata][:time_in_queue] = time_delta_since(item[:metadata][:enqueued_time])
+              event_publisher.dequeued(now, queue, item[:metadata], item[:class], *item[:args])
+            end
           end
         end
       end
