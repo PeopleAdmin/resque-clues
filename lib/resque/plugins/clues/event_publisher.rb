@@ -10,9 +10,18 @@ module Resque
       EVENT_TYPES = %w[enqueued dequeued destroyed perform_started perform_finished failed]
 
       # Event publisher base class with shared logic between all publishers.
-      class Base
+      class BasePublisher
         private
-        def build_hash(event_type, timestamp, queue, metadata, worker_class, args)
+        # Builds a hash for the passed data.
+        #
+        # event_type:: enqueued, dequeued, perform_started, perform_finished or
+        # failed.
+        # timestamp:: the time the event occurred.
+        # queue:: the queue the job was in
+        # metadata:: metadata for the job, such as host, process, etc...
+        # worker_class:: the worker job class
+        # args:: arguments passed to the perform_method.
+        def build_hash(event_type, timestamp, queue, metadata, worker_class, args) # :doc:
           {
             event_type: event_type,
             timestamp: timestamp,
@@ -27,9 +36,14 @@ module Resque
       # Event publisher that publishes events to a file-like stream in a JSON
       # format.  Each message is punctuated with a terminus character, which
       # defaults to newline ("\n")
-      class StreamPublisher < Base
+      class StreamPublisher < BasePublisher
         attr_reader :stream, :terminus
 
+        # Creates a new StreamPublisher that writes to the passed stream,
+        # terminating each event with the terminus.
+        #
+        # stream:: The file-like stream to write events to.
+        # terminus:: The character to write between events.  Defaults to "\n"
         def initialize(stream, terminus="\n")
           @stream = stream
           @terminus = terminus
@@ -53,12 +67,18 @@ module Resque
 
       # Event publisher that publishes events to a log file using ruby's
       # stdlib logger and an optional formatter..
-      class LogPublisher < Base
+      class LogPublisher < BasePublisher
         attr_reader :logger
 
-        def initialize(log_path, formatter=nil)
+        # Creates a new LogPublisher that writes events to a log file at the
+        # specified log_path, using an optional formatter.  The default format
+        # will simply be the event in a json format, one per line.
+        #
+        # log_path:: The path to the log file.
+        # formatter:: A lambda formatter for log messages
+        def initialize(log_path, formatter=lambda{|s, d, p, msg| "#{msg}\n"})
           @logger = Logger.new(log_path)
-          @logger.formatter = formatter || lambda{|s, d, p, msg| "#{msg}\n"}
+          @logger.formatter = formatter
         end
 
         EVENT_TYPES.each do |event_type|

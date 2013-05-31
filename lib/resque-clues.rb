@@ -19,6 +19,7 @@ module Resque
   end
 end
 
+# Patch resque to support event broadcasting.
 Resque.send(:alias_method, :_base_push, :push)
 Resque.send(:alias_method, :_base_pop, :pop)
 Resque.send(:extend, Resque::Plugins::Clues::QueueDecorator)
