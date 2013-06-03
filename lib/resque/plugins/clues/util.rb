@@ -13,7 +13,8 @@ module Resque
       
         # The delta of time between the passed time and now.
         def time_delta_since(start)
-          start.to_f - Time.now.utc.to_f
+          result = Time.now.utc.to_f - start.to_f
+          result >= 0.0 ? result : 0.0
         end
 
         # Convenience method to determine if resque-clues is properly
