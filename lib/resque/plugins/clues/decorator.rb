@@ -4,7 +4,7 @@ require 'time'
 module Resque
   module Plugins
     module Clues
-      # Module capable of redefining the Resque#push and Resque#pop methods so 
+      # Module capable of redefining the Resque#push and Resque#pop methods so
       # that:
       #
       # * metadata will be stored in redis.
@@ -14,10 +14,9 @@ module Resque
       # an event publisher has been configured.
       module QueueDecorator
         include Resque::Plugins::Clues::Util
-        include Resque::Plugins::Clues::EventHashable
 
         # push an item onto the queue.  If resque-clues is configured, this
-        # will First create the metadata associated with the event and adds it 
+        # will First create the metadata associated with the event and adds it
         # to the item.  This will include:
         #
         # * event_hash: a unique hash identifying the job, will be included
@@ -43,26 +42,25 @@ module Resque
             enqueued_time: Time.now.utc.to_f
           }
           if Resque::Plugins::Clues.item_preprocessor
-            Resque::Plugins::Clues.item_preprocessor.call(queue, item) 
+            Resque::Plugins::Clues.item_preprocessor.call(queue, item)
           end
           event_publisher.enqueued(now, queue, item[:metadata], item[:class], *item[:args])
           _base_push(queue, item)
         end
 
         # pops an item off the head of the queue.  This will use the original
-        # pop operation to get the item, then calculate the time in queue and 
+        # pop operation to get the item, then calculate the time in queue and
         # broadcast a dequeued event.
         #
         # queue:: The queue to pop from.
         def pop(queue)
           _base_pop(queue).tap do |orig|
             unless orig.nil?
-              item = symbolize(orig)
-              return orig unless clues_configured? and item[:metadata]
-              item[:metadata][:hostname] = hostname
-              item[:metadata][:process] = $$
-              item[:metadata][:time_in_queue] = time_delta_since(item[:metadata][:enqueued_time])
-              event_publisher.dequeued(now, queue, item[:metadata], item[:class], *item[:args])
+              return orig unless clues_configured?
+              item = prepare(orig) do |item|
+                item[:metadata][:time_in_queue] = time_delta_since(item[:metadata][:enqueued_time])
+                event_publisher.dequeued(now, queue, item[:metadata], item[:class], *item[:args])
+              end
             end
           end
         end
@@ -93,7 +91,7 @@ module Resque
         def self.define_perform(klass) # :doc:
           klass.send(:define_method, :perform) do
             return _base_perform unless clues_configured?
-            item = symbolize(payload)
+            item = prepare(payload)
             event_publisher.perform_started(now, queue, item[:metadata], item[:class], *item[:args])
             @perform_started = Time.now
             _base_perform.tap do
@@ -113,7 +111,7 @@ module Resque
           klass.send(:define_method, :fail) do |exception|
             _base_fail(exception).tap do
               if clues_configured?
-                item = symbolize(payload)
+                item = prepare(payload)
                 item[:metadata][:time_to_perform] = time_delta_since(@perform_started)
                 item[:metadata][:exception] = exception.class
                 item[:metadata][:message] = exception.message

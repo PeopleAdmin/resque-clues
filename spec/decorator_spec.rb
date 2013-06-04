@@ -173,6 +173,8 @@ describe Resque::Plugins::Clues::JobDecorator do
         queue.should == :test_queue
         klass.should == 'TestWorker'
         args.should == [1,2]
+        metadata[:hostname].should == `hostname`.strip
+        metadata[:process].should == $$
         yield(metadata) if block_given?
       end
     end
