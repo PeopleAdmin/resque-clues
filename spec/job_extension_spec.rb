@@ -7,7 +7,7 @@ end
 describe Resque::Plugins::Clues::JobExtension do
   before do
     Resque::Plugins::Clues.event_publisher = nil
-    @job = Resque::Job.new(:test_queue, base_item(metadata: {}))
+    @job = Resque::Job.new(:test_queue, base_item(clues_metadata: {}))
   end
 
   it "should pass Resque lint detection" do

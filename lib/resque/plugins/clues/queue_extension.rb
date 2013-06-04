@@ -34,7 +34,7 @@ module Resque
         def push(queue, orig)
           return _base_push(queue, orig) unless CLUES.clues_configured?
           item = CLUES.symbolize(orig)
-          item[:metadata] = {
+          item[:clues_metadata] = {
             event_hash: CLUES.event_hash,
             hostname: CLUES.hostname,
             process: CLUES.process,
@@ -43,7 +43,7 @@ module Resque
           if Resque::Plugins::Clues.item_preprocessor
             Resque::Plugins::Clues.item_preprocessor.call(queue, item)
           end
-          CLUES.event_publisher.enqueued(CLUES.now, queue, item[:metadata], item[:class], *item[:args])
+          CLUES.event_publisher.enqueued(CLUES.now, queue, item[:clues_metadata], item[:class], *item[:args])
           _base_push(queue, item)
         end
 
@@ -57,8 +57,8 @@ module Resque
             unless orig.nil?
               return orig unless CLUES.clues_configured?
               item = CLUES.prepare(orig) do |item|
-                item[:metadata][:time_in_queue] = CLUES.time_delta_since(item[:metadata][:enqueued_time])
-                CLUES.event_publisher.dequeued(CLUES.now, queue, item[:metadata], item[:class], *item[:args])
+                item[:clues_metadata][:time_in_queue] = CLUES.time_delta_since(item[:clues_metadata][:enqueued_time])
+                CLUES.event_publisher.dequeued(CLUES.now, queue, item[:clues_metadata], item[:class], *item[:args])
               end
             end
           end

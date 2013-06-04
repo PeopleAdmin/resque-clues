@@ -59,9 +59,9 @@ module Resque
       # and process into its metadata (if present)
       def self.prepare(hash)
         symbolize(hash).tap do |hash|
-          if hash[:metadata]
-            hash[:metadata][:hostname] = hostname
-            hash[:metadata][:process] = process
+          if hash[:clues_metadata]
+            hash[:clues_metadata][:hostname] = hostname
+            hash[:clues_metadata][:process] = process
             yield(hash) if block_given?
           end
         end

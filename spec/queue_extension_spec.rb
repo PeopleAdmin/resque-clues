@@ -82,7 +82,7 @@ describe Resque::Plugins::Clues::QueueExtension do
         end
 
         it "should allow an item_preprocessor to inject arbitrary data" do
-          Resque::Plugins::Clues.item_preprocessor = proc {|queue, item| item[:metadata][:employer_id] = 1}
+          Resque::Plugins::Clues.item_preprocessor = proc {|queue, item| item[:clues_metadata][:employer_id] = 1}
           publishes(:enqueued) {|metadata| metadata[:employer_id].should == 1}
           Resque.push(:test_queue, base_item)
         end
@@ -91,7 +91,7 @@ describe Resque::Plugins::Clues::QueueExtension do
 
     describe "#pop" do
       it "should invoke _base_pop with a queue arg and return the result" do
-        result = base_item 'metadata' => {}
+        result = base_item 'clues_metadata' => {}
         Resque.stub(:_base_pop) do |queue|
           queue.should == :test_queue
           result
@@ -117,7 +117,7 @@ describe Resque::Plugins::Clues::QueueExtension do
 
       context "metadata in the item retrieved from redis" do
         before do
-          Resque.stub(:_base_pop){ base_item 'metadata' => {}}
+          Resque.stub(:_base_pop){ base_item 'clues_metadata' => {}}
         end
 
         it "should contain the hostname" do

@@ -1,6 +1,5 @@
 * Do not symbolize the item hash; Use string keys
 * Make hostname/process to be memoized.
-* Change metadata to clues_metadata or otherwise namespace it for PA.
 * Check return behavior of block.
 * Get rid of BasePublisher.
 * Abstract the marshalling of event data to strings (JSON default)
