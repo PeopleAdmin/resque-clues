@@ -1,5 +1,4 @@
 * Do not mix in Util to Resque or Resque::Jobs (namespace polution)
-* Change Decorator to Extension (name confusion)
 * Split decorator.rb into different files.
 * Do not symbolize the item hash; Use string keys
 * Change all instances of Time.new to Time.now
