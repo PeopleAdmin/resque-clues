@@ -1,0 +1,13 @@
+* Do not mix in Util to Resque or Resque::Jobs (namespace polution)
+* Change Decorator to Extension (name confusion)
+* Split decorator.rb into different files.
+* Do not symbolize the item hash; Use string keys
+* Change all instances of Time.new to Time.now
+* Make hostname/process to be memoized.
+* Change metadata to clues_metadata or otherwise namespace it for PA.
+* Check return behavior of block.
+* Get rid of BasePublisher.
+* Abstract the marshalling of event data to strings (JSON default)
+* Better names for stdlib logger formatter.
+* Use multijson or Resque::Helper.encode instead of stdlib.
+* Remove EventHashable
