@@ -6,12 +6,7 @@ module Resque
     module Clues
       class << self
         attr_accessor :event_publisher
-      end
-      EVENT_TYPES = %w[enqueued dequeued destroyed perform_started perform_finished failed]
 
-      # Event publisher base class with shared logic between all publishers.
-      class BasePublisher
-        private
         # Builds a hash for the passed data.
         #
         # event_type:: enqueued, dequeued, perform_started, perform_finished or
@@ -32,11 +27,13 @@ module Resque
           }
         end
       end
+      CLUES = Resque::Plugins::Clues
+      EVENT_TYPES = %w[enqueued dequeued destroyed perform_started perform_finished failed]
 
       # Event publisher that publishes events to a file-like stream in a JSON
       # format.  Each message is punctuated with a terminus character, which
       # defaults to newline ("\n")
-      class StreamPublisher < BasePublisher
+      class StreamPublisher
         attr_reader :stream, :terminus
 
         # Creates a new StreamPublisher that writes to the passed stream,
@@ -51,7 +48,7 @@ module Resque
 
         EVENT_TYPES.each do |event_type|
           define_method(event_type) do |timestamp, queue, metadata, klass, *args|
-            event = build_hash(event_type, timestamp, queue, metadata, klass, args)
+            event = CLUES.build_hash(event_type, timestamp, queue, metadata, klass, args)
             stream.write("#{event.to_json}#{terminus}")
           end
         end
@@ -67,7 +64,7 @@ module Resque
 
       # Event publisher that publishes events to a log file using ruby's
       # stdlib logger and an optional formatter..
-      class LogPublisher < BasePublisher
+      class LogPublisher
         attr_reader :logger
 
         # Creates a new LogPublisher that writes events to a log file at the
@@ -85,7 +82,7 @@ module Resque
 
         EVENT_TYPES.each do |event_type|
           define_method(event_type) do |timestamp, queue, metadata, klass, *args|
-            logger.info(build_hash(
+            logger.info(CLUES.build_hash(
               event_type, timestamp, queue, metadata, klass, args).to_json)
           end
         end
