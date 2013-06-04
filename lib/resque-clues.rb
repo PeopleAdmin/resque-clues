@@ -1,5 +1,4 @@
 require 'resque'
-require 'resque/plugins/clues/event_hashable'
 require 'resque/plugins/clues/util'
 require 'resque/plugins/clues/queue_extension'
 require 'resque/plugins/clues/job_extension'

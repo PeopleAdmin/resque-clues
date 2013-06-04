@@ -5,4 +5,3 @@
 * Abstract the marshalling of event data to strings (JSON default)
 * Better names for stdlib logger formatter.
 * Use multijson or Resque::Helper.encode instead of stdlib.
-* Remove EventHashable
