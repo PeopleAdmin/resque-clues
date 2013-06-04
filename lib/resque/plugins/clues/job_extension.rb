@@ -7,8 +7,7 @@ module Resque
       # Module capable of redefining the Job#perform and Job#failed methods so
       # that they publish perform_started, perform_finished and failed events.
       module JobExtension
-        include Resque::Plugins::Clues::Util
-
+        CLUES = Resque::Plugins::Clues
         # Invoked when this module is included by a class.  Will redefine the
         # perform and failed methods on that class.
         #
@@ -28,13 +27,13 @@ module Resque
         # klass:: The class to define the perform method on.
         def self.define_perform(klass) # :doc:
           klass.send(:define_method, :perform) do
-            return _base_perform unless clues_configured?
-            item = prepare(payload)
-            event_publisher.perform_started(now, queue, item[:metadata], item[:class], *item[:args])
+            return _base_perform unless CLUES.configured?
+            item = CLUES.prepare(payload)
+            CLUES.event_publisher.perform_started(CLUES.now, queue, item[:metadata], item[:class], *item[:args])
             @perform_started = Time.now
             _base_perform.tap do
-              item[:metadata][:time_to_perform] = time_delta_since(@perform_started)
-              event_publisher.perform_finished(now, queue, item[:metadata], item[:class], *item[:args])
+              item[:metadata][:time_to_perform] = CLUES.time_delta_since(@perform_started)
+              CLUES.event_publisher.perform_finished(CLUES.now, queue, item[:metadata], item[:class], *item[:args])
             end
           end
         end
@@ -48,13 +47,13 @@ module Resque
         def self.define_failed(klass) # :doc:
           klass.send(:define_method, :fail) do |exception|
             _base_fail(exception).tap do
-              if clues_configured?
-                item = prepare(payload)
-                item[:metadata][:time_to_perform] = time_delta_since(@perform_started)
+              if CLUES.configured?
+                item = CLUES.prepare(payload)
+                item[:metadata][:time_to_perform] = CLUES.time_delta_since(@perform_started)
                 item[:metadata][:exception] = exception.class
                 item[:metadata][:message] = exception.message
                 item[:metadata][:backtrace] = exception.backtrace
-                event_publisher.failed(now, queue, item[:metadata], item[:class], *item[:args])
+                CLUES.event_publisher.failed(CLUES.now, queue, item[:metadata], item[:class], *item[:args])
               end
             end
           end

@@ -13,8 +13,7 @@ module Resque
       # * That event data (including its metadata) will be published, provided
       # an event publisher has been configured.
       module QueueExtension
-        include Resque::Plugins::Clues::Util
-
+        CLUES = Resque::Plugins::Clues
         # push an item onto the queue.  If resque-clues is configured, this
         # will First create the metadata associated with the event and adds it
         # to the item.  This will include:
@@ -33,18 +32,18 @@ module Resque
         # queue:: The queue to push onto
         # orig:: The original item to push onto the queue.
         def push(queue, orig)
-          return _base_push(queue, orig) unless clues_configured?
-          item = symbolize(orig)
+          return _base_push(queue, orig) unless CLUES.clues_configured?
+          item = CLUES.symbolize(orig)
           item[:metadata] = {
-            event_hash: event_hash,
-            hostname: hostname,
-            process: process,
+            event_hash: CLUES.event_hash,
+            hostname: CLUES.hostname,
+            process: CLUES.process,
             enqueued_time: Time.now.utc.to_f
           }
           if Resque::Plugins::Clues.item_preprocessor
             Resque::Plugins::Clues.item_preprocessor.call(queue, item)
           end
-          event_publisher.enqueued(now, queue, item[:metadata], item[:class], *item[:args])
+          CLUES.event_publisher.enqueued(CLUES.now, queue, item[:metadata], item[:class], *item[:args])
           _base_push(queue, item)
         end
 
@@ -56,10 +55,10 @@ module Resque
         def pop(queue)
           _base_pop(queue).tap do |orig|
             unless orig.nil?
-              return orig unless clues_configured?
-              item = prepare(orig) do |item|
-                item[:metadata][:time_in_queue] = time_delta_since(item[:metadata][:enqueued_time])
-                event_publisher.dequeued(now, queue, item[:metadata], item[:class], *item[:args])
+              return orig unless CLUES.clues_configured?
+              item = CLUES.prepare(orig) do |item|
+                item[:metadata][:time_in_queue] = CLUES.time_delta_since(item[:metadata][:enqueued_time])
+                CLUES.event_publisher.dequeued(CLUES.now, queue, item[:metadata], item[:class], *item[:args])
               end
             end
           end
