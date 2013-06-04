@@ -75,10 +75,12 @@ module Resque
         # will simply be the event in a json format, one per line.
         #
         # log_path:: The path to the log file.
-        # formatter:: A lambda formatter for log messages
-        def initialize(log_path, formatter=lambda{|s, d, p, msg| "#{msg}\n"})
+        # formatter:: A lambda formatter for log messages.  Defaults to writing
+        # one event per line.  See
+        # http://www.ruby-doc.org/stdlib-1.9.3/libdoc/logger/rdoc/Logger/Formatter.html
+        def initialize(log_path, formatter=nil)
           @logger = Logger.new(log_path)
-          @logger.formatter = formatter
+          @logger.formatter = formatter || lambda {|severity, time, program, msg| "#{msg}\n"}
         end
 
         EVENT_TYPES.each do |event_type|
