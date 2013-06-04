@@ -25,7 +25,7 @@ describe 'event publishers' do
   describe Resque::Plugins::Clues::StreamPublisher do
     def verify_output_for_event_type(type)
       @stream.rewind
-      event = JSON.parse(@stream.readlines[-1].chomp)
+      event = MultiJson.load(@stream.readlines[-1].chomp)
       event["queue"].should == "test_queue"
       event["metadata"].should == {}
       event["timestamp"].should_not be_nil
@@ -86,7 +86,7 @@ describe 'event publishers' do
     end
 
     def last_event
-      JSON.parse(File.readlines(@log_path)[-1].chomp)
+      MultiJson.load(File.readlines(@log_path)[-1].chomp)
     end
 
     before do

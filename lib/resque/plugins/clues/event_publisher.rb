@@ -4,28 +4,9 @@ require 'delegate'
 module Resque
   module Plugins
     module Clues
+      CLUES = Resque::Plugins::Clues
       class << self
         attr_accessor :event_publisher
-
-        # Builds a hash for the passed data.
-        #
-        # event_type:: enqueued, dequeued, perform_started, perform_finished or
-        # failed.
-        # timestamp:: the time the event occurred.
-        # queue:: the queue the job was in
-        # metadata:: metadata for the job, such as host, process, etc...
-        # worker_class:: the worker job class
-        # args:: arguments passed to the perform_method.
-        def build_hash(event_type, timestamp, queue, metadata, worker_class, args) # :doc:
-          {
-            event_type: event_type,
-            timestamp: timestamp,
-            queue: queue,
-            metadata: metadata,
-            worker_class: worker_class,
-            args: args
-          }
-        end
       end
       CLUES = Resque::Plugins::Clues
       EVENT_TYPES = %w[enqueued dequeued destroyed perform_started perform_finished failed]
@@ -34,22 +15,20 @@ module Resque
       # format.  Each message is punctuated with a terminus character, which
       # defaults to newline ("\n")
       class StreamPublisher
-        attr_reader :stream, :terminus
+        attr_reader :stream
 
         # Creates a new StreamPublisher that writes to the passed stream,
         # terminating each event with the terminus.
         #
         # stream:: The file-like stream to write events to.
-        # terminus:: The character to write between events.  Defaults to "\n"
-        def initialize(stream, terminus="\n")
+        def initialize(stream)
           @stream = stream
-          @terminus = terminus
         end
 
         EVENT_TYPES.each do |event_type|
           define_method(event_type) do |timestamp, queue, metadata, klass, *args|
-            event = CLUES.build_hash(event_type, timestamp, queue, metadata, klass, args)
-            stream.write("#{event.to_json}#{terminus}")
+            event = CLUES.event_marshaller.call(event_type, timestamp, queue, metadata, klass, args)
+            stream.write("#{event}")
           end
         end
       end
@@ -77,13 +56,13 @@ module Resque
         # http://www.ruby-doc.org/stdlib-1.9.3/libdoc/logger/rdoc/Logger/Formatter.html
         def initialize(log_path, formatter=nil)
           @logger = Logger.new(log_path)
-          @logger.formatter = formatter || lambda {|severity, time, program, msg| "#{msg}\n"}
+          @logger.formatter = formatter || lambda {|severity, time, program, msg| msg}
         end
 
         EVENT_TYPES.each do |event_type|
           define_method(event_type) do |timestamp, queue, metadata, klass, *args|
-            logger.info(CLUES.build_hash(
-              event_type, timestamp, queue, metadata, klass, args).to_json)
+            logger.info(CLUES.event_marshaller.call(
+              event_type, timestamp, queue, metadata, klass, args))
           end
         end
       end

@@ -16,7 +16,7 @@ releases, etc...
 Coupled with those tools, it will enable you to create views into your
 background processes like the following:
 
-![splunk dashboard](http://i.imgur.com/avxId1e.png)
+![splunk dashboard](http://i.imgur.com/0sZEw1L.png?1)
 
 ## Lifecycle events
 
@@ -70,7 +70,37 @@ end
 Where event_type is enqueued, dequeued, perform_started, perform_finished and
 failed.
 
-## Item preprocessors
+## Event Marshallers
+
+An event marshallers is used to coerce event data into a format suitable for
+sending to an event publisher's destination.  This is a proc or lambda with the
+following call signature:  
+
+```ruby
+lambda do |event_type, timestamp, queue, metadata, worker_class, args|
+  # something that returns a string
+end
+```
+
+By default, clues will use an event_marshaller that will simply marshall this
+data to a JSON object in the following format:
+
+```
+{
+  "event_type":"dequeued",
+  "timestamp":"2013-06-04T20:59:58Z",
+  "queue":"test_queue",
+  "metadata": {
+    "event_hash":"0695f49c5e70fc18da91961113e1769a"
+    "hostname":"Lances-MacBook-Air.local",
+    "process":30731
+  },
+  "worker_class":"TestWorker",
+  "args":[1,2]
+}
+```
+
+## Item Preprocessors
 
 Immediately before Resque puts job data into a queue, the queue and the payload
 hash will be sent to a configurable item_preprocessor proc.  The payload hash
