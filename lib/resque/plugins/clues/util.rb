@@ -5,7 +5,7 @@ module Resque
     module Clues
       # A unique event hash crafted from the hostname, process and time.
       def self.event_hash
-        Digest::MD5.hexdigest("#{hostname}#{process}#{Time.new.utc.to_f}")
+        Digest::MD5.hexdigest("#{hostname}#{process}#{Time.now.utc.to_f}")
       end
 
       # The hostname Resque is running on.
@@ -20,7 +20,7 @@ module Resque
 
       # The current UTC time in iso 8601 format.
       def self.now
-        Time.new.utc.iso8601
+        Time.now.utc.iso8601
       end
 
       # The delta of time between the passed time and now.

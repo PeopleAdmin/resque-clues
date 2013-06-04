@@ -8,7 +8,7 @@ require 'tmpdir'
 describe 'event publishers' do
 
   before do
-    @current_time = Time.new.utc.iso8601
+    @current_time = Time.now.utc.iso8601
   end
 
   def publish_event_type(type)

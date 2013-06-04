@@ -1,5 +1,4 @@
 * Do not symbolize the item hash; Use string keys
-* Change all instances of Time.new to Time.now
 * Make hostname/process to be memoized.
 * Change metadata to clues_metadata or otherwise namespace it for PA.
 * Check return behavior of block.
