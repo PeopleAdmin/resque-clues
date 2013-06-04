@@ -4,7 +4,7 @@ def base_item(overrides={})
   {"class" => TestWorker.to_s, "args" => [1,2]}.merge!(overrides)
 end
 
-describe Resque::Plugins::Clues::QueueDecorator do
+describe Resque::Plugins::Clues::QueueExtension do
   before {Resque::Plugins::Clues.event_publisher = nil}
 
   def publishes(evt_type)
@@ -18,7 +18,7 @@ describe Resque::Plugins::Clues::QueueDecorator do
   end
 
   it "should pass Resque lint detection" do
-    Resque::Plugin.lint(Resque::Plugins::Clues::QueueDecorator)
+    Resque::Plugin.lint(Resque::Plugins::Clues::QueueExtension)
   end
 
   it "should expose original push method as _base_push" do
@@ -139,14 +139,14 @@ describe Resque::Plugins::Clues::QueueDecorator do
   end
 end
 
-describe Resque::Plugins::Clues::JobDecorator do
+describe Resque::Plugins::Clues::JobExtension do
   before do
     Resque::Plugins::Clues.event_publisher = nil
     @job = Resque::Job.new(:test_queue, base_item(metadata: {}))
   end
 
   it "should pass Resque lint detection" do
-    Resque::Plugin.lint(Resque::Plugins::Clues::JobDecorator)
+    Resque::Plugin.lint(Resque::Plugins::Clues::JobExtension)
   end
 
   context "with clues not configured" do

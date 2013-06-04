@@ -12,7 +12,7 @@ module Resque
       # preprocessor.
       # * That event data (including its metadata) will be published, provided
       # an event publisher has been configured.
-      module QueueDecorator
+      module QueueExtension
         include Resque::Plugins::Clues::Util
 
         # push an item onto the queue.  If resque-clues is configured, this
@@ -68,7 +68,7 @@ module Resque
 
       # Module capable of redefining the Job#perform and Job#failed methods so
       # that they publish perform_started, perform_finished and failed events.
-      module JobDecorator
+      module JobExtension
         include Resque::Plugins::Clues::Util
 
         # Invoked when this module is included by a class.  Will redefine the

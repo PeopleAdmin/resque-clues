@@ -1,7 +1,7 @@
 require 'resque'
 require 'resque/plugins/clues/event_hashable'
 require 'resque/plugins/clues/util'
-require 'resque/plugins/clues/decorator'
+require 'resque/plugins/clues/extensions'
 require 'resque/plugins/clues/event_publisher'
 require 'resque/plugins/clues/version'
 
@@ -22,7 +22,7 @@ end
 # Patch resque to support event broadcasting.
 Resque.send(:alias_method, :_base_push, :push)
 Resque.send(:alias_method, :_base_pop, :pop)
-Resque.send(:extend, Resque::Plugins::Clues::QueueDecorator)
+Resque.send(:extend, Resque::Plugins::Clues::QueueExtension)
 Resque::Job.send(:alias_method, :_base_perform, :perform)
 Resque::Job.send(:alias_method, :_base_fail, :fail)
-Resque::Job.send(:include, Resque::Plugins::Clues::JobDecorator)
+Resque::Job.send(:include, Resque::Plugins::Clues::JobExtension)
