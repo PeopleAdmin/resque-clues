@@ -27,7 +27,6 @@ end
 describe 'end-to-end integration' do
   before(:each) do
     @stream = StringIO.new
-    Resque.redis.flushall
     @worker = Resque::Worker.new(:test_queue)
     Resque::Plugins::Clues.event_publisher = Resque::Plugins::Clues::StreamPublisher.new(@stream)
   end

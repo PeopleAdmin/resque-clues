@@ -98,7 +98,6 @@ describe Resque::Plugins::Clues::QueueExtension do
       context "when nothing is in the queue" do
         it "should not die horribly" do
           # TODO this shouldn't delete all keys in redis.
-          Resque.redis.flushall
           expect{Resque.pop(:test_queue)}.to_not raise_error
         end
       end
