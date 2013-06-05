@@ -30,9 +30,9 @@ module Resque
         #
         # queue:: The queue to push onto
         # orig:: The original item to push onto the queue.
-        def push(queue, orig)
-          return _base_push(queue, orig) unless Clues.clues_configured?
-          item = Clues::LooseHash.new(orig)
+        def push(queue, item)
+          return _base_push(queue, item) unless Clues.clues_configured?
+          #item = Clues::LooseHash.new(orig)
           item['clues_metadata'] = {
             'event_hash' => Clues.event_hash,
             'hostname' => Clues.hostname,
@@ -42,7 +42,7 @@ module Resque
           if Resque::Plugins::Clues.item_preprocessor
             Resque::Plugins::Clues.item_preprocessor.call(queue, item)
           end
-          Clues.event_publisher.publish(:enqueued, Clues.now, queue, item['clues_metadata'], item['class'], *item['args'])
+          Clues.event_publisher.publish(:enqueued, Clues.now, queue, item['clues_metadata'], item[:class], *item[:args])
           _base_push(queue, item)
         end
 

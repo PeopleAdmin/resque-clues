@@ -28,32 +28,4 @@ describe Resque::Plugins::Clues do
       Resque::Plugins::Clues.time_delta_since(start).should == 0.0
     end
   end
-
-  describe Resque::Plugins::Clues::LooseHash do
-    before {@item = Resque::Plugins::Clues::LooseHash.new({})}
-
-    context "with a value for a string key" do
-      before {@item['a'] = true}
-
-      it "should allow access to the value through the string key" do
-        @item['a'].should == true
-      end
-
-      it "should allow access to the value through an equivalent symbol key" do
-        @item[:a].should == true
-      end
-    end
-
-    context "with a value for a symbol key" do
-      before {@item[:a] = true}
-
-      it "should allow access to the value through the symbol key" do
-        @item[:a].should == true
-      end
-
-      it "should allow access to the value through an equivalent string key" do
-        @item['a'].should == true
-      end
-    end
-  end
 end

@@ -43,7 +43,8 @@ describe 'end-to-end integration' do
       @worker.work(0.1)
     end
     @stream.rewind
-    block.call(@stream.readlines.map{|line| JSON.parse(line)})
+    # TODO change this to multi-json
+    block.call(@stream.readlines.map{|line| MultiJson.decode(line)})
   end
 
   def verify_event(event, type, klass, *args)
@@ -88,6 +89,18 @@ describe 'end-to-end integration' do
           event["metadata"]["message"].should == 'test'
           event["metadata"]["backtrace"].should_not be_nil
         end
+      end
+    end
+  end
+
+  context "Resque internals assumptions" do
+    describe "Resque#push" do
+      it "should receive item with class and args as symbols" do
+        received_item = nil
+        Resque.stub(:push) {|queue, item| received_item = item}
+        Resque.enqueue(DummyWorker, 'test')
+        received_item[:class].should == "DummyWorker"
+        received_item[:args].should == ['test']
       end
     end
   end
