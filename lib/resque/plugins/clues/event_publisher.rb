@@ -24,11 +24,10 @@ module Resque
           @stream = stream
         end
 
-        EVENT_TYPES.each do |event_type|
-          define_method(event_type) do |timestamp, queue, metadata, klass, *args|
-            event = CLUES.event_marshaller.call(event_type, timestamp, queue, metadata, klass, args)
-            stream.write(event)
-          end
+        # Publishes an event to the stream.
+        def publish(event_type, timestamp, queue, metadata, klass, *args)
+          event = CLUES.event_marshaller.call(event_type, timestamp, queue, metadata, klass, args)
+          stream.write(event)
         end
       end
 
@@ -58,11 +57,10 @@ module Resque
           @logger.formatter = formatter || lambda {|severity, time, program, msg| msg}
         end
 
-        EVENT_TYPES.each do |event_type|
-          define_method(event_type) do |timestamp, queue, metadata, klass, *args|
-            logger.info(CLUES.event_marshaller.call(
-              event_type, timestamp, queue, metadata, klass, args))
-          end
+        # Publishes an event to the log.
+        def publish(event_type, timestamp, queue, metadata, klass, *args)
+          logger.info(CLUES.event_marshaller.call(
+            event_type, timestamp, queue, metadata, klass, args))
         end
       end
 
@@ -74,13 +72,13 @@ module Resque
           super([])
         end
 
-        EVENT_TYPES.each do |event_type|
-          define_method(event_type) do |timestamp, queue, metadata, klass, *args|
-            each do |child|
-              child.send(
-                event_type, timestamp, queue, metadata, klass, *args
-              ) rescue error(event_type, child)
-            end
+        # Invokes publish on each child publisher for them to publish the event
+        # in their own way.
+        def publish(event_type, timestamp, queue, metadata, klass, *args)
+          each do |child|
+            child.publish(
+              event_type, timestamp, queue, metadata, klass, *args
+            ) rescue error(event_type, child)
           end
         end
 

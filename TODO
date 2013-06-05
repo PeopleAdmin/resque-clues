@@ -1,3 +1,4 @@
-* Do not symbolize the item hash; Use string keys
-* Make hostname/process to be memoized.
-* Check return behavior of block.
+* Modify the publish signature to accept a hash instead of all the params.
+* Add file-like streams that wrap TCP/IP and UDP sockets?  (not needed for our
+  case).  Would allow use of StreamPublisher to communicate over those
+  protocols

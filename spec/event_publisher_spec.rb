@@ -12,7 +12,7 @@ describe 'event publishers' do
   end
 
   def publish_event_type(type)
-    @publisher.send(type, @current_time, :test_queue, {}, "FooBar", "a", "b")
+    @publisher.publish(type, @current_time, :test_queue, {}, "FooBar", "a", "b")
   end
 
   describe Resque::Plugins::Clues::StreamPublisher do
@@ -145,8 +145,8 @@ describe 'event publishers' do
 
     def verify_event_delegated_to_children(event_type)
       @publisher.each do |child|
-        child.should_receive(event_type).with(
-          @current_time, :test_queue, {}, "FooBar", "a", "b")
+        child.should_receive(:publish).with(
+          event_type, @current_time, :test_queue, {}, "FooBar", "a", "b")
       end
     end
 

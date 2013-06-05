@@ -29,11 +29,11 @@ module Resque
           klass.send(:define_method, :perform) do
             return _base_perform unless CLUES.configured?
             item = CLUES.prepare(payload)
-            CLUES.event_publisher.perform_started(CLUES.now, queue, item['clues_metadata'], item['class'], *item['args'])
+            CLUES.event_publisher.publish(:perform_started, CLUES.now, queue, item['clues_metadata'], item['class'], *item['args'])
             @perform_started = Time.now
             _base_perform.tap do
               item['clues_metadata']['time_to_perform'] = CLUES.time_delta_since(@perform_started)
-              CLUES.event_publisher.perform_finished(CLUES.now, queue, item['clues_metadata'], item['class'], *item['args'])
+              CLUES.event_publisher.publish(:perform_finished, CLUES.now, queue, item['clues_metadata'], item['class'], *item['args'])
             end
           end
         end
@@ -53,7 +53,7 @@ module Resque
                 item['clues_metadata']['exception'] = exception.class
                 item['clues_metadata']['message'] = exception.message
                 item['clues_metadata']['backtrace'] = exception.backtrace
-                CLUES.event_publisher.failed(CLUES.now, queue, item['clues_metadata'], item['class'], *item['args'])
+                CLUES.event_publisher.publish(:failed, CLUES.now, queue, item['clues_metadata'], item['class'], *item['args'])
               end
             end
           end

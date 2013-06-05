@@ -43,7 +43,7 @@ module Resque
           if Resque::Plugins::Clues.item_preprocessor
             Resque::Plugins::Clues.item_preprocessor.call(queue, item)
           end
-          CLUES.event_publisher.enqueued(CLUES.now, queue, item['clues_metadata'], item['class'], *item['args'])
+          CLUES.event_publisher.publish(:enqueued, CLUES.now, queue, item['clues_metadata'], item['class'], *item['args'])
           _base_push(queue, item)
         end
 
@@ -58,7 +58,7 @@ module Resque
               return orig unless CLUES.clues_configured?
               item = CLUES.prepare(orig) do |item|
                 item['clues_metadata']['time_in_queue'] = CLUES.time_delta_since(item['clues_metadata']['enqueued_time'])
-                CLUES.event_publisher.dequeued(CLUES.now, queue, item['clues_metadata'], item['class'], *item['args'])
+                CLUES.event_publisher.publish(:dequeued, CLUES.now, queue, item['clues_metadata'], item['class'], *item['args'])
               end
             end
           end

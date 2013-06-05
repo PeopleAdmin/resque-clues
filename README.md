@@ -62,7 +62,7 @@ You can implement your own publishers as long as they implement event handling
 methods as follows:
 
 ```ruby
-def event_type(timestamp, queue, metadata, klass, *args)
+def publish(event_type, timestamp, queue, metadata, klass, *args)
   ...
 end
 ```
