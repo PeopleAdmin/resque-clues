@@ -1,18 +1,17 @@
 require 'spec_helper'
 
-CLUES = Resque::Plugins::Clues
 describe Resque::Plugins::Clues do
   describe "#event_hash" do
     it "should generate different hashes for different times" do
-      hash1 = CLUES.event_hash
+      hash1 = Resque::Plugins::Clues.event_hash
       sleep(1)
-      hash2 = CLUES.event_hash
+      hash2 = Resque::Plugins::Clues.event_hash
       (hash1 == hash2).should == false
     end
 
     it "should generate different hashes for different processes" do
-      hash = CLUES.event_hash
-      fork {(hash == CLUES.event_hash).should == false}
+      hash = Resque::Plugins::Clues.event_hash
+      fork {(hash == Resque::Plugins::Clues.event_hash).should == false}
       Process.wait
     end
   end
@@ -21,12 +20,12 @@ describe Resque::Plugins::Clues do
     it "should detect ~1 second run time" do
       start = Time.now.utc
       sleep(1)
-      CLUES.time_delta_since(start).between?(0.99, 1.01).should == true
+      Resque::Plugins::Clues.time_delta_since(start).between?(0.99, 1.01).should == true
     end
 
     it "should not allow negative numbers (time sync)" do
       start = Time.now.utc + 1
-      CLUES.time_delta_since(start).should == 0.0
+      Resque::Plugins::Clues.time_delta_since(start).should == 0.0
     end
   end
 

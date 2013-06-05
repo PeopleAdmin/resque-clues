@@ -7,7 +7,6 @@ module Resque
       class << self
         attr_accessor :event_publisher
       end
-      CLUES = self
       EVENT_TYPES = %w[enqueued dequeued destroyed perform_started perform_finished failed]
 
       # Event publisher that publishes events to a file-like stream in a JSON
@@ -26,7 +25,7 @@ module Resque
 
         # Publishes an event to the stream.
         def publish(event_type, timestamp, queue, metadata, klass, *args)
-          event = CLUES.event_marshaller.call(event_type, timestamp, queue, metadata, klass, args)
+          event = Clues.event_marshaller.call(event_type, timestamp, queue, metadata, klass, args)
           stream.write(event)
         end
       end
@@ -59,7 +58,7 @@ module Resque
 
         # Publishes an event to the log.
         def publish(event_type, timestamp, queue, metadata, klass, *args)
-          logger.info(CLUES.event_marshaller.call(
+          logger.info(Clues.event_marshaller.call(
             event_type, timestamp, queue, metadata, klass, args))
         end
       end
