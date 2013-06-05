@@ -27,7 +27,7 @@ module Resque
         EVENT_TYPES.each do |event_type|
           define_method(event_type) do |timestamp, queue, metadata, klass, *args|
             event = CLUES.event_marshaller.call(event_type, timestamp, queue, metadata, klass, args)
-            stream.write("#{event}")
+            stream.write(event)
           end
         end
       end
