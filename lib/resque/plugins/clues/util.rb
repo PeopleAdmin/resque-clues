@@ -1,8 +1,25 @@
 require 'time'
+require 'delegate'
 
 module Resque
   module Plugins
     module Clues
+      # Hash wrapper class that treats strings and symbols equivalently.
+      class LooseHash < SimpleDelegator
+        def initialize(item)
+          super(item)
+        end
+        
+        def [](key)
+          result = __getobj__[key]
+          unless result
+            other_key = key.is_a?(String) ? key.to_sym : key.to_s
+            result = __getobj__[other_key]
+          end
+          result
+        end
+      end
+
       # A unique event hash crafted from the hostname, process and time.
       def self.event_hash
         Digest::MD5.hexdigest("#{hostname}#{process}#{Time.now.utc.to_f}")
@@ -40,28 +57,13 @@ module Resque
         Resque::Plugins::Clues.event_publisher
       end
 
-      # Recursively symbolizes all keys of the passed hash.  Is an
-      # equivalent to active_support's symbolize_keys, but I did not
-      # want to introduce the depencency just for this method.
-      def self.symbolize(hash)
-        hash.inject({}) do |memo, kv|
-          memo.tap do
-            if kv[1].instance_of? Hash
-              memo[kv[0].to_sym] = symbolize(kv[1])
-            else
-              memo[kv[0].to_sym] = kv[1]
-            end
-          end
-        end
-      end
-
-      # Prepares a hash by symbolizing its keys and injecting the hostname
+      # Prepares a hash by injecting the hostname
       # and process into its metadata (if present)
       def self.prepare(hash)
-        symbolize(hash).tap do |hash|
-          if hash[:clues_metadata]
-            hash[:clues_metadata][:hostname] = hostname
-            hash[:clues_metadata][:process] = process
+        LooseHash.new(hash).tap do |hash|
+          if hash['clues_metadata']
+            hash['clues_metadata']['hostname'] = hostname
+            hash['clues_metadata']['process'] = process
             yield(hash) if block_given?
           end
         end

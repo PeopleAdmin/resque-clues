@@ -1,9 +1,5 @@
 require 'spec_helper'
 
-def base_item(overrides={})
-  {"class" => TestWorker.to_s, "args" => [1,2]}.merge!(overrides)
-end
-
 describe Resque::Plugins::Clues::QueueExtension do
   before {Resque::Plugins::Clues.event_publisher = nil}
 
@@ -58,8 +54,8 @@ describe Resque::Plugins::Clues::QueueExtension do
         item_result = base_item
         Resque.stub(:_base_push) do |queue, item|
           queue.should == :test_queue
-          item[:class].should == "TestWorker"
-          item[:args].should == [1,2]
+          item['class'].should == "TestWorker"
+          item['args'].should == [1,2]
           "received"
         end
         Resque.push(:test_queue, base_item).should == "received"
@@ -67,23 +63,23 @@ describe Resque::Plugins::Clues::QueueExtension do
 
       context "adds metadata to item stored in redis that" do
         it "should contain an event_hash identifying the job entering the queue" do
-          publishes(:enqueued) {|metadata| metadata[:event_hash].nil?.should == false}
+          publishes(:enqueued) {|metadata| metadata['event_hash'].nil?.should == false}
           Resque.push(:test_queue, base_item)
         end
 
         it "should contain the host's hostname" do
-          publishes(:enqueued) {|metadata| metadata[:hostname].should == `hostname`.strip}
+          publishes(:enqueued) {|metadata| metadata['hostname'].should == `hostname`.strip}
           Resque.push(:test_queue, base_item)
         end
 
         it "should contain the process id" do
-          publishes(:enqueued) {|metadata| metadata[:process].should == $$}
+          publishes(:enqueued) {|metadata| metadata['process'].should == $$}
           Resque.push(:test_queue, base_item)
         end
 
         it "should allow an item_preprocessor to inject arbitrary data" do
-          Resque::Plugins::Clues.item_preprocessor = proc {|queue, item| item[:clues_metadata][:employer_id] = 1}
-          publishes(:enqueued) {|metadata| metadata[:employer_id].should == 1}
+          Resque::Plugins::Clues.item_preprocessor = proc {|queue, item| item['clues_metadata']['employer_id'] = 1}
+          publishes(:enqueued) {|metadata| metadata['employer_id'].should == 1}
           Resque.push(:test_queue, base_item)
         end
       end
@@ -121,17 +117,17 @@ describe Resque::Plugins::Clues::QueueExtension do
         end
 
         it "should contain the hostname" do
-          publishes(:dequeued) {|metadata| metadata[:hostname].should == `hostname`.chop}
+          publishes(:dequeued) {|metadata| metadata['hostname'].should == `hostname`.chop}
           Resque.pop(:test_queue)
         end
 
         it "should contain the process id" do
-          publishes(:dequeued) {|metadata| metadata[:process].should == $$}
+          publishes(:dequeued) {|metadata| metadata['process'].should == $$}
           Resque.pop(:test_queue)
         end
 
         it "should contain an enqueued_time" do
-          publishes(:dequeued) {|metadata| metadata[:time_in_queue].nil?.should == false}
+          publishes(:dequeued) {|metadata| metadata['time_in_queue'].nil?.should == false}
           Resque.pop(:test_queue)
         end
       end

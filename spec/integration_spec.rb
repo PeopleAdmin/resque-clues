@@ -3,6 +3,9 @@ require 'stringio'
 require 'timeout'
 require 'json'
 
+# Setting $TESTING to true will cause Resque to not fork a child to perform the
+# job, doing all the work within the test process and allowing us to test
+# results for all aspects of the job performance.
 $TESTING = true
 
 class DummyWorker

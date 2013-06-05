@@ -17,20 +17,6 @@ describe Resque::Plugins::Clues do
     end
   end
 
-  describe "#symbolize" do
-    it "should convert a hash with string keys to symbols 1 level deep" do
-      CLUES.symbolize({"a" => 1}).should == {a: 1}
-    end
-
-    it "should convert a hash with string keys to symbols 2 levels deep" do
-      CLUES.symbolize({"a" => {"b" => 2}}).should == {a: {b: 2}}
-    end
-
-    it "should convert a hash with string keys to symbols 3 levels deep" do
-      CLUES.symbolize({"a" => {"b" => {"c" => 3}}}).should == {a: {b: {c: 3}}}
-    end
-  end
-
   describe "#time_delta_since" do
     it "should detect ~1 second run time" do
       start = Time.now.utc
@@ -41,6 +27,34 @@ describe Resque::Plugins::Clues do
     it "should not allow negative numbers (time sync)" do
       start = Time.now.utc + 1
       CLUES.time_delta_since(start).should == 0.0
+    end
+  end
+
+  describe Resque::Plugins::Clues::LooseHash do
+    before {@item = Resque::Plugins::Clues::LooseHash.new({})}
+
+    context "with a value for a string key" do
+      before {@item['a'] = true}
+
+      it "should allow access to the value through the string key" do
+        @item['a'].should == true
+      end
+
+      it "should allow access to the value through an equivalent symbol key" do
+        @item[:a].should == true
+      end
+    end
+
+    context "with a value for a symbol key" do
+      before {@item[:a] = true}
+
+      it "should allow access to the value through the symbol key" do
+        @item[:a].should == true
+      end
+
+      it "should allow access to the value through an equivalent string key" do
+        @item['a'].should == true
+      end
     end
   end
 end

@@ -1,13 +1,13 @@
 require 'spec_helper'
 
-def base_item(overrides={})
-  {"class" => TestWorker.to_s, "args" => [1,2]}.merge!(overrides)
-end
-
 describe Resque::Plugins::Clues::JobExtension do
+  def base_item(overrides={})
+    {"class" => TestWorker.to_s, "args" => [1,2]}.merge!(overrides)
+  end
+
   before do
     Resque::Plugins::Clues.event_publisher = nil
-    @job = Resque::Job.new(:test_queue, base_item(clues_metadata: {}))
+    @job = Resque::Job.new(:test_queue, base_item('clues_metadata' => {}))
   end
 
   it "should pass Resque lint detection" do
@@ -38,8 +38,8 @@ describe Resque::Plugins::Clues::JobExtension do
         queue.should == :test_queue
         klass.should == 'TestWorker'
         args.should == [1,2]
-        metadata[:hostname].should == `hostname`.strip
-        metadata[:process].should == $$
+        metadata['hostname'].should == `hostname`.strip
+        metadata['process'].should == $$
         yield(metadata) if block_given?
       end
     end
@@ -56,7 +56,7 @@ describe Resque::Plugins::Clues::JobExtension do
 
       it "should publish a perform_finished event that includes the time_to_perform" do
         publishes(:perform_finished) do |metadata|
-          metadata[:time_to_perform].nil?.should == false
+          metadata['time_to_perform'].nil?.should == false
         end
         @job.perform
       end
@@ -76,21 +76,21 @@ describe Resque::Plugins::Clues::JobExtension do
       context "includes metadata in the perform_failed event that should" do
         it "should include the time_to_perform" do
           publishes(:failed) do |metadata|
-            metadata[:time_to_perform].nil?.should == false
+            metadata['time_to_perform'].nil?.should == false
           end
           @job.fail(Exception.new)
         end
 
         it "should include the exception class" do
           publishes(:failed) do |metadata|
-            metadata[:exception].should == Exception
+            metadata['exception'].should == Exception
           end
           @job.fail(Exception.new)
         end
 
         it "should include the exception message" do
           publishes(:failed) do |metadata|
-            metadata[:message].should == 'test'
+            metadata['message'].should == 'test'
           end
           @job.fail(Exception.new('test'))
         end
@@ -100,7 +100,7 @@ describe Resque::Plugins::Clues::JobExtension do
             raise 'test'
           rescue => e
             publishes(:failed) do |metadata|
-              metadata[:backtrace].nil?.should == false
+              metadata['backtrace'].nil?.should == false
             end
             @job.fail(e)
           end
