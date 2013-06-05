@@ -4,11 +4,10 @@ require 'delegate'
 module Resque
   module Plugins
     module Clues
-      CLUES = Resque::Plugins::Clues
       class << self
         attr_accessor :event_publisher
       end
-      CLUES = Resque::Plugins::Clues
+      CLUES = self
       EVENT_TYPES = %w[enqueued dequeued destroyed perform_started perform_finished failed]
 
       # Event publisher that publishes events to a file-like stream in a JSON
