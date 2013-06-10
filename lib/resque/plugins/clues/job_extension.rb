@@ -27,12 +27,11 @@ module Resque
         def self.define_perform(klass) # :doc:
           klass.send(:define_method, :perform) do
             return _base_perform unless Clues.configured?
-            item = Clues.prepare(payload)
-            Clues.event_publisher.publish(:perform_started, Clues.now, queue, item['clues_metadata'], item['class'], *item['args'])
+            Clues.event_publisher.publish(:perform_started, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
             @perform_started = Time.now
-            _base_perform.tap do
-              item['clues_metadata']['time_to_perform'] = Clues.time_delta_since(@perform_started)
-              Clues.event_publisher.publish(:perform_finished, Clues.now, queue, item['clues_metadata'], item['class'], *item['args'])
+            _base_perform.tap do 
+              payload['clues_metadata']['time_to_perform'] = Clues.time_delta_since(@perform_started)
+              Clues.event_publisher.publish(:perform_finished, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
             end
           end
         end
@@ -47,12 +46,11 @@ module Resque
           klass.send(:define_method, :fail) do |exception|
             _base_fail(exception).tap do
               if Clues.configured?
-                item = Clues.prepare(payload)
-                item['clues_metadata']['time_to_perform'] = Clues.time_delta_since(@perform_started)
-                item['clues_metadata']['exception'] = exception.class
-                item['clues_metadata']['message'] = exception.message
-                item['clues_metadata']['backtrace'] = exception.backtrace
-                Clues.event_publisher.publish(:failed, Clues.now, queue, item['clues_metadata'], item['class'], *item['args'])
+                payload['clues_metadata']['time_to_perform'] = Clues.time_delta_since(@perform_started)
+                payload['clues_metadata']['exception'] = exception.class
+                payload['clues_metadata']['message'] = exception.message
+                payload['clues_metadata']['backtrace'] = exception.backtrace
+                Clues.event_publisher.publish(:failed, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
               end
             end
           end

@@ -1,18 +1,6 @@
 require 'spec_helper'
 
 describe Resque::Plugins::Clues::QueueExtension do
-  before {Resque::Plugins::Clues.event_publisher = nil}
-
-  def publishes(evt_type)
-    Resque::Plugins::Clues.event_publisher.stub(evt_type) do |time, queue, metadata, klass, *args|
-      time.nil?.should == false
-      queue.should == :test_queue
-      klass.should == 'TestWorker'
-      args.should == [1,2]
-      yield(metadata)
-    end
-  end
-
   it "should pass Resque lint detection" do
     Resque::Plugin.lint(Resque::Plugins::Clues::QueueExtension)
   end
@@ -26,6 +14,7 @@ describe Resque::Plugins::Clues::QueueExtension do
   end
 
   context "with clues not configured" do
+    before {Resque::Plugins::Clues.event_publisher = nil}
     describe "#push" do
       it "should delegate directly to original Resque push method" do
         Resque.should_receive(:_base_push).with(:test_queue, {})
@@ -45,8 +34,10 @@ describe Resque::Plugins::Clues::QueueExtension do
   end
 
   context "with clues properly configured" do
+    let(:publisher) {TestPublisher.new}
+
     before do
-      Resque::Plugins::Clues.event_publisher = Resque::Plugins::Clues::StandardOutPublisher.new
+      Resque::Plugins::Clues.event_publisher = publisher
     end
 
     describe "#push" do
@@ -63,24 +54,24 @@ describe Resque::Plugins::Clues::QueueExtension do
 
       context "adds metadata to item stored in redis that" do
         it "should contain an event_hash identifying the job entering the queue" do
-          publishes(:enqueued) {|metadata| metadata['event_hash'].nil?.should == false}
           Resque.push(:test_queue, base_item)
+          publisher.metadata['event_hash'].nil?.should == false
         end
 
         it "should contain the host's hostname" do
-          publishes(:enqueued) {|metadata| metadata['hostname'].should == `hostname`.strip}
           Resque.push(:test_queue, base_item)
+          publisher.metadata['hostname'].should == `hostname`.strip
         end
 
         it "should contain the process id" do
-          publishes(:enqueued) {|metadata| metadata['process'].should == $$}
           Resque.push(:test_queue, base_item)
+          publisher.metadata['process'].should == $$
         end
 
         it "should allow an item_preprocessor to inject arbitrary data" do
           Resque::Plugins::Clues.item_preprocessor = proc {|queue, item| item['clues_metadata']['employer_id'] = 1}
-          publishes(:enqueued) {|metadata| metadata['employer_id'].should == 1}
           Resque.push(:test_queue, base_item)
+          publisher.metadata['employer_id'].should == 1
         end
       end
     end
@@ -104,7 +95,7 @@ describe Resque::Plugins::Clues::QueueExtension do
 
       context "when retrieving an item without metadata" do
         it "should delegate directly to _base_pop" do
-          result = base_item
+          result = base_item 'clues_metadata' => {}
           Resque.stub(:_base_pop) {|queue| result}
           Resque.pop(:test_queue).should == result
         end
@@ -116,18 +107,18 @@ describe Resque::Plugins::Clues::QueueExtension do
         end
 
         it "should contain the hostname" do
-          publishes(:dequeued) {|metadata| metadata['hostname'].should == `hostname`.chop}
           Resque.pop(:test_queue)
+          publisher.metadata['hostname'].should == `hostname`.chop
         end
 
         it "should contain the process id" do
-          publishes(:dequeued) {|metadata| metadata['process'].should == $$}
           Resque.pop(:test_queue)
+          publisher.metadata['process'].should == $$
         end
 
         it "should contain an enqueued_time" do
-          publishes(:dequeued) {|metadata| metadata['time_in_queue'].nil?.should == false}
           Resque.pop(:test_queue)
+          publisher.metadata['time_in_queue'].nil?.should == false
         end
       end
     end

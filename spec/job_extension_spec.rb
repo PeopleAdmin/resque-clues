@@ -42,8 +42,6 @@ describe Resque::Plugins::Clues::JobExtension do
         queue.should == :test_queue
         klass.should == 'TestWorker'
         args.should == [1,2]
-        metadata['hostname'].should == `hostname`.strip
-        metadata['process'].should == $$
         opts[type].call(metadata) if opts[type]
       end
     end

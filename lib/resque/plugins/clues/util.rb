@@ -40,17 +40,6 @@ module Resque
       def self.event_publisher
         Resque::Plugins::Clues.event_publisher
       end
-
-      # Prepares a hash by injecting the hostname
-      # and process into its metadata (if present)
-      def self.prepare(hash)
-        if hash['clues_metadata']
-          hash['clues_metadata']['hostname'] = hostname
-          hash['clues_metadata']['process'] = process
-          yield(hash) if block_given?
-        end
-        hash
-      end
     end
   end
 end

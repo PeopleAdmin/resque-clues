@@ -17,7 +17,7 @@ module Resque
         # will First create the metadata associated with the event and adds it
         # to the item.  This will include:
         #
-        # * event_hash: a unique hash identifying the job, will be included
+        # * event_hash: a unique item identifying the job, will be included
         # with other events arising from that job.
         # * hostname: the hostname of the machine where the event occurred.
         # * process:  The process id of the ruby process where the event
@@ -52,13 +52,13 @@ module Resque
         #
         # queue:: The queue to pop from.
         def pop(queue)
-          _base_pop(queue).tap do |orig|
-            unless orig.nil?
-              return orig unless Clues.clues_configured?
-              item = Clues.prepare(orig) do |item|
-                item['clues_metadata']['time_in_queue'] = Clues.time_delta_since(item['clues_metadata']['enqueued_time'])
-                Clues.event_publisher.publish(:dequeued, Clues.now, queue, item['clues_metadata'], item['class'], *item['args'])
-              end
+          _base_pop(queue).tap do |item|
+            unless item.nil?
+              return item unless Clues.clues_configured?
+              item['clues_metadata']['hostname'] = Clues.hostname
+              item['clues_metadata']['process'] = Clues.process
+              item['clues_metadata']['time_in_queue'] = Clues.time_delta_since(item['clues_metadata']['enqueued_time'])
+              Clues.event_publisher.publish(:dequeued, Clues.now, queue, item['clues_metadata'], item['class'], *item['args'])
             end
           end
         end
