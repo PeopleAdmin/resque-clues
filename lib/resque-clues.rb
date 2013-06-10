@@ -15,6 +15,16 @@ module Resque
         def configured?
           !event_publisher.nil?
         end
+
+        def enable!
+          # Patch resque to support event broadcasting.
+          Resque.send(:alias_method, :_base_push, :push)
+          Resque.send(:alias_method, :_base_pop, :pop)
+          Resque.send(:extend, Resque::Plugins::Clues::QueueExtension)
+          Resque::Job.send(:alias_method, :_base_perform, :perform)
+          Resque::Job.send(:alias_method, :_base_fail, :fail)
+          Resque::Job.send(:include, Resque::Plugins::Clues::JobExtension)
+        end
       end
     end
   end
@@ -44,10 +54,4 @@ Resque::Plugins::Clues.event_marshaller =
     "#{event}\n"
   end
 
-# Patch resque to support event broadcasting.
-Resque.send(:alias_method, :_base_push, :push)
-Resque.send(:alias_method, :_base_pop, :pop)
-Resque.send(:extend, Resque::Plugins::Clues::QueueExtension)
-Resque::Job.send(:alias_method, :_base_perform, :perform)
-Resque::Job.send(:alias_method, :_base_fail, :fail)
-Resque::Job.send(:include, Resque::Plugins::Clues::JobExtension)
+Resque::Plugins::Clues.enable!
