@@ -32,7 +32,6 @@ module Resque
         # orig:: The original item to push onto the queue.
         def push(queue, item)
           return _base_push(queue, item) unless Clues.clues_configured?
-          #item = Clues::LooseHash.new(orig)
           item['clues_metadata'] = {
             'event_hash' => Clues.event_hash,
             'hostname' => Clues.hostname,
@@ -53,12 +52,14 @@ module Resque
         # queue:: The queue to pop from.
         def pop(queue)
           _base_pop(queue).tap do |item|
+            # TODO refactor
             unless item.nil?
-              return item unless Clues.clues_configured?
-              item['clues_metadata']['hostname'] = Clues.hostname
-              item['clues_metadata']['process'] = Clues.process
-              item['clues_metadata']['time_in_queue'] = Clues.time_delta_since(item['clues_metadata']['enqueued_time'])
-              Clues.event_publisher.publish(:dequeued, Clues.now, queue, item['clues_metadata'], item['class'], *item['args'])
+              if Clues.clues_configured? and item['clues_metadata']
+                item['clues_metadata']['hostname'] = Clues.hostname
+                item['clues_metadata']['process'] = Clues.process
+                item['clues_metadata']['time_in_queue'] = Clues.time_delta_since(item['clues_metadata']['enqueued_time'])
+                Clues.event_publisher.publish(:dequeued, Clues.now, queue, item['clues_metadata'], item['class'], *item['args'])
+              end
             end
           end
         end

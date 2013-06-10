@@ -26,12 +26,15 @@ module Resque
         # klass:: The class to define the perform method on.
         def self.define_perform(klass) # :doc:
           klass.send(:define_method, :perform) do
-            return _base_perform unless Clues.configured?
-            Clues.event_publisher.publish(:perform_started, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
-            @perform_started = Time.now
-            _base_perform.tap do 
-              payload['clues_metadata']['time_to_perform'] = Clues.time_delta_since(@perform_started)
-              Clues.event_publisher.publish(:perform_finished, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
+            if Clues.configured? and payload['clues_metadata']
+              Clues.event_publisher.publish(:perform_started, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
+              @perform_started = Time.now
+              _base_perform.tap do 
+                payload['clues_metadata']['time_to_perform'] = Clues.time_delta_since(@perform_started)
+                Clues.event_publisher.publish(:perform_finished, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
+              end
+            else
+              _base_perform
             end
           end
         end
@@ -45,12 +48,13 @@ module Resque
         def self.define_failed(klass) # :doc:
           klass.send(:define_method, :fail) do |exception|
             _base_fail(exception).tap do
-              if Clues.configured?
-                payload['clues_metadata']['time_to_perform'] = Clues.time_delta_since(@perform_started)
-                payload['clues_metadata']['exception'] = exception.class
-                payload['clues_metadata']['message'] = exception.message
-                payload['clues_metadata']['backtrace'] = exception.backtrace
-                Clues.event_publisher.publish(:failed, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
+              metadata = payload['clues_metadata']
+              if Clues.configured? and metadata
+                metadata['time_to_perform'] = Clues.time_delta_since(@perform_started)
+                metadata['exception'] = exception.class
+                metadata['message'] = exception.message
+                metadata['backtrace'] = exception.backtrace
+                Clues.event_publisher.publish(:failed, Clues.now, queue, metadata, payload['class'], *payload['args'])
               end
             end
           end

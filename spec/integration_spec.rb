@@ -11,8 +11,16 @@ $TESTING = true
 class DummyWorker
   @queue = :test_queue
 
+  def self.invoked?
+    @invoked
+  end
+
+  def self.reset!
+    @invoked = false
+  end
+
   def self.perform(msg)
-    # do nothing
+    @invoked = true
   end
 end
 
@@ -26,8 +34,10 @@ end
 
 describe 'end-to-end integration' do
   before(:each) do
+    DummyWorker.reset!
     @stream = StringIO.new
     @worker = Resque::Worker.new(:test_queue)
+    #@worker.very_verbose = true
     Resque::Plugins::Clues.event_publisher = Resque::Plugins::Clues::StreamPublisher.new(@stream)
   end
 
@@ -37,12 +47,19 @@ describe 'end-to-end integration' do
   end
 
   def enqueue_then_verify(klass, *args, &block)
+    Resque.enqueue(klass, *args)
+    work_and_verify(&block)
+  end
+
+  def work
     timeout(0.2) do
-      Resque.enqueue(klass, *args)
       @worker.work(0.1)
     end
+  end
+
+  def work_and_verify(&block)
+    work
     @stream.rewind
-    # TODO change this to multi-json
     block.call(@stream.readlines.map{|line| MultiJson.decode(line)})
   end
 
@@ -88,6 +105,31 @@ describe 'end-to-end integration' do
           event["metadata"]["message"].should == 'test'
           event["metadata"]["backtrace"].should_not be_nil
         end
+      end
+    end
+  end
+
+  context "for job enqueued prior to use of resque-clues gem" do
+    context "job that performs normally" do
+      before do
+        Resque.redis.rpush "queue:test_queue", "{\"class\":\"DummyWorker\",\"args\":[\"test\"]}"
+      end
+
+      it "should succeed without failures" do
+        work
+        DummyWorker.invoked?.should == true
+        Resque::Failure.all.should == nil
+      end
+    end
+
+    context "job failures" do
+      before do
+        Resque.redis.rpush "queue:test_queue", "{\"class\":\"FailingDummyWorker\",\"args\":[\"test\"]}"
+      end
+
+      it "should report failure normally" do
+        work
+        Resque::Failure.count.should == 1
       end
     end
   end
