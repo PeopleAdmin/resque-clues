@@ -41,54 +41,59 @@ describe Resque::Plugins::Clues::QueueExtension do
     end
 
     describe "#push" do
+      def base_item(overrides={})
+        {:class => TestWorker.to_s, :args => [1,2]}.merge!(overrides)
+      end
+
       it "should invoke _base_push with a queue and item args and return the result" do
-        item_result = base_item
-        Resque.stub(:_base_push) do |queue, item|
-          queue.should == :test_queue
-          item['class'].should == "TestWorker"
-          item['args'].should == [1,2]
-          "received"
-        end
-        Resque.push(:test_queue, base_item).should == "received"
+        Resque.should_receive(:_base_push)
+        Resque.push(:test_queue, base_item)
       end
 
       context "adds metadata to item stored in redis that" do
         it "should contain an event_hash identifying the job entering the queue" do
           Resque.push(:test_queue, base_item)
-          publisher.metadata['event_hash'].nil?.should == false
+          verify_event :enqueued do |metadata|
+            metadata['event_hash'].nil?.should == false
+          end
         end
 
         it "should contain the host's hostname" do
           Resque.push(:test_queue, base_item)
-          publisher.metadata['hostname'].should == `hostname`.strip
+          verify_event :enqueued do |metadata|
+            metadata['hostname'].should == `hostname`.strip
+          end
         end
 
         it "should contain the process id" do
           Resque.push(:test_queue, base_item)
-          publisher.metadata['process'].should == $$
+          verify_event :enqueued do |metadata|
+            metadata['process'].should == $$
+          end
         end
 
         it "should allow an item_preprocessor to inject arbitrary data" do
           Resque::Plugins::Clues.item_preprocessor = proc {|queue, item| item['clues_metadata']['employer_id'] = 1}
           Resque.push(:test_queue, base_item)
-          publisher.metadata['employer_id'].should == 1
+          verify_event :enqueued do |metadata|
+            metadata['employer_id'].should == 1
+          end
         end
       end
     end
 
     describe "#pop" do
+      def base_item(overrides={})
+        {'class' => TestWorker.to_s, 'args' => [1,2]}.merge!(overrides)
+      end
+
       it "should invoke _base_pop with a queue arg and return the result" do
-        result = base_item 'clues_metadata' => {}
-        Resque.stub(:_base_pop) do |queue|
-          queue.should == :test_queue
-          result
-        end
-        Resque.pop(:test_queue).should == result
+        Resque.should_receive(:_base_pop)
+        Resque.pop(:test_queue)
       end
 
       context "when nothing is in the queue" do
         it "should not die horribly" do
-          # TODO this shouldn't delete all keys in redis.
           expect{Resque.pop(:test_queue)}.to_not raise_error
         end
       end
@@ -108,17 +113,23 @@ describe Resque::Plugins::Clues::QueueExtension do
 
         it "should contain the hostname" do
           Resque.pop(:test_queue)
-          publisher.metadata['hostname'].should == `hostname`.chop
+          verify_event :dequeued do |metadata|
+            metadata['hostname'].should == `hostname`.chop
+          end
         end
 
         it "should contain the process id" do
           Resque.pop(:test_queue)
-          publisher.metadata['process'].should == $$
+          verify_event :dequeued do |metadata|
+            metadata['process'].should == $$
+          end
         end
 
         it "should contain an enqueued_time" do
           Resque.pop(:test_queue)
-          publisher.metadata['time_in_queue'].nil?.should == false
+          verify_event :dequeued do |metadata|
+            metadata['time_in_queue'].nil?.should == false
+          end
         end
       end
     end
