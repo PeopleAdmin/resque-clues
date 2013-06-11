@@ -134,6 +134,32 @@ describe 'end-to-end integration' do
     end
   end
 
+  context "where job enqueued with resque-clues gem but worker performing job is not" do
+    def unpatch_and_work
+      unpatch_resque
+      work
+      yield if block_given?
+    ensure
+      repatch_resque
+    end
+
+    context "for job that performs normally" do
+      before {Resque.enqueue DummyWorker, "test"}
+
+      it "should succeed without failures" do
+        unpatch_and_work {Resque::Failure.all.should == nil}
+      end
+    end
+
+    context "for job failures" do
+      before {Resque.enqueue FailingDummyWorker, "test"}
+
+      it "should report failure normally" do
+        unpatch_and_work {Resque::Failure.count.should == 1}
+      end
+    end
+  end
+
   context "Resque internals assumptions" do
     describe "Resque#push" do
       it "should receive item with class and args as symbols" do

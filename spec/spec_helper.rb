@@ -27,3 +27,47 @@ def verify_event(event_type, opts={event_index: -1})
   publisher.args(opts[:event_index]).should == [1, 2]
   yield(publisher.metadata(opts[:event_index])) if block_given?
 end
+
+def unpatch_resque
+  Resque.instance_exec do
+    def push(queue, item)
+      _base_push(queue, item)
+    end
+
+    def pop(queue)
+      _base_pop(queue)
+    end
+  end
+
+  Resque::Job.class_exec do
+    def perform
+      _base_perform
+    end
+
+    def fail(exception)
+      _base_fail(exception)
+    end
+  end
+end
+
+def repatch_resque
+  Resque.instance_exec do
+    def push(queue, item)
+      _clues_push(queue, item)
+    end
+
+    def pop(queue)
+      _clues_pop(queue)
+    end
+  end
+
+  Resque::Job.class_exec do
+    def perform
+      _clues_perform
+    end
+
+    def fail(exception)
+      _clues_fail(exception)
+    end
+  end
+end
