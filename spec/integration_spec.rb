@@ -110,9 +110,19 @@ describe 'end-to-end integration' do
   end
 
   context "for job enqueued prior to use of resque-clues gem" do
+    def enqueue_unpatched(worker, *args)
+      unpatch_resque
+      begin
+        binding.pry
+        Resque.enqueue(worker, *args)
+      ensure
+        repatch_resque
+      end
+    end
+
     context "job that performs normally" do
       before do
-        Resque.redis.rpush "queue:test_queue", "{\"class\":\"DummyWorker\",\"args\":[\"test\"]}"
+        enqueue_unpatched(DummyWorker, "test")
       end
 
       it "should succeed without failures" do
@@ -124,7 +134,7 @@ describe 'end-to-end integration' do
 
     context "job failures" do
       before do
-        Resque.redis.rpush "queue:test_queue", "{\"class\":\"FailingDummyWorker\",\"args\":[\"test\"]}"
+        enqueue_unpatched(FailingDummyWorker, "test")
       end
 
       it "should report failure normally" do
