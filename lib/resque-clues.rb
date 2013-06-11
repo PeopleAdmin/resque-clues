@@ -18,12 +18,33 @@ module Resque
 
         def enable!
           # Patch resque to support event broadcasting.
-          Resque.send(:alias_method, :_base_push, :push)
-          Resque.send(:alias_method, :_base_pop, :pop)
           Resque.send(:extend, Resque::Plugins::Clues::QueueExtension)
-          Resque::Job.send(:alias_method, :_base_perform, :perform)
-          Resque::Job.send(:alias_method, :_base_fail, :fail)
           Resque::Job.send(:include, Resque::Plugins::Clues::JobExtension)
+          Resque.instance_exec do
+            alias :_base_push :push
+            alias :_base_pop :pop
+
+            def push(queue, item)
+              _clues_push(queue, item)
+            end
+
+            def pop(queue)
+              _clues_pop(queue)
+            end
+          end
+
+          Resque::Job.class_exec do
+            alias :_base_perform :perform
+            alias :_base_fail :fail
+
+            def perform
+              _clues_perform
+            end
+
+            def fail(exception)
+              _clues_fail(exception)
+            end
+          end
         end
       end
     end

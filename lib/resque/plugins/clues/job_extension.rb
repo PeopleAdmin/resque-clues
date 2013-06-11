@@ -25,7 +25,7 @@ module Resque
         #
         # klass:: The class to define the perform method on.
         def self.define_perform(klass) # :doc:
-          klass.send(:define_method, :perform) do
+          klass.send(:define_method, :_clues_perform) do
             if Clues.configured? and payload['clues_metadata']
               Clues.event_publisher.publish(:perform_started, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
               @perform_started = Time.now
@@ -46,7 +46,7 @@ module Resque
         # klass::  The class to define the failed method on.
         #
         def self.define_failed(klass) # :doc:
-          klass.send(:define_method, :fail) do |exception|
+          klass.send(:define_method, :_clues_fail) do |exception|
             _base_fail(exception).tap do
               metadata = payload['clues_metadata']
               if Clues.configured? and metadata

@@ -30,7 +30,7 @@ module Resque
         #
         # queue:: The queue to push onto
         # orig:: The original item to push onto the queue.
-        def push(queue, item)
+        def _clues_push(queue, item)
           return _base_push(queue, item) unless Clues.clues_configured?
           item['clues_metadata'] = {
             'event_hash' => Clues.event_hash,
@@ -50,7 +50,7 @@ module Resque
         # broadcast a dequeued event.
         #
         # queue:: The queue to pop from.
-        def pop(queue)
+        def _clues_pop(queue)
           _base_pop(queue).tap do |item|
             # TODO refactor
             unless item.nil?
