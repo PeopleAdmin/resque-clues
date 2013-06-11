@@ -113,7 +113,6 @@ describe 'end-to-end integration' do
     def enqueue_unpatched(worker, *args)
       unpatch_resque
       begin
-        binding.pry
         Resque.enqueue(worker, *args)
       ensure
         repatch_resque
