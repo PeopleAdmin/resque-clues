@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'set'
 
 describe Resque::Plugins::Clues::JobExtension do
   def base_item(overrides={})
@@ -32,47 +31,39 @@ describe Resque::Plugins::Clues::JobExtension do
   end
 
   context "with clues configured" do
-    def publishes(opts={})
-      opts.keys.each{|key| @events_not_received << key}
-      @events_not_received.size.should_not == 0
-      Resque::Plugins::Clues.event_publisher.should_receive(:publish).at_least(:once)
-      Resque::Plugins::Clues.event_publisher.stub(:publish) do |type, time, queue, metadata, klass, *args|
-        @events_not_received.delete(type)
-        time.nil?.should == false
-        queue.should == :test_queue
-        klass.should == 'TestWorker'
-        args.should == [1,2]
-        opts[type].call(metadata) if opts[type]
-      end
-    end
+    let(:publisher) {TestPublisher.new}
 
     before do
-      Resque::Plugins::Clues.event_publisher = Resque::Plugins::Clues::StandardOutPublisher.new
-      @events_not_received = Set.new([])
+      Resque::Plugins::Clues.event_publisher = publisher
     end
 
-    after do
-      @events_not_received.size.should == 0 
+    def verify_event(event_type, opts={event_index: -1})
+      publisher.event_type(opts[:event_index]).should == event_type
+      publisher.timestamp(opts[:event_index]).should_not be_empty
+      publisher.queue(opts[:event_index]).should == :test_queue
+      publisher.klass(opts[:event_index]).should == 'TestWorker'
+      publisher.args(opts[:event_index]).should == [1, 2]
+      yield(publisher.metadata(opts[:event_index])) if block_given?
     end
 
     describe "#perform" do
       it "should publish a perform_started event" do
-        publishes perform_started: nil
         @job.perform
+        verify_event :perform_started, event_index: -2
       end
 
       it "should publish a perform_finished event that includes the time_to_perform" do
-        publishes(perform_finished: lambda do |metadata|
-          metadata['time_to_perform'].nil?.should == false
-        end)
         @job.perform
+        verify_event :perform_finished do |metadata|
+          metadata['time_to_perform'].nil?.should == false
+        end
       end
     end
 
     describe "#fail" do
       it "should publish a perform_failed event" do
-        publishes failed: nil
         @job.fail(Exception.new)
+        verify_event :failed
       end
 
       it "should delegate to original fail" do
@@ -82,34 +73,34 @@ describe Resque::Plugins::Clues::JobExtension do
 
       context "includes metadata in the perform_failed event that should" do
         it "should include the time_to_perform" do
-          publishes(failed: lambda do |metadata|
-            metadata['time_to_perform'].nil?.should == false
-          end)
           @job.fail(Exception.new)
+          verify_event :failed do |metadata|
+            metadata['time_to_perform'].nil?.should == false
+          end
         end
 
         it "should include the exception class" do
-          publishes(failed: lambda do |metadata|
-            metadata['exception'].should == Exception
-          end)
           @job.fail(Exception.new)
+          verify_event :failed do |metadata|
+            metadata['exception'].should == Exception
+          end
         end
 
         it "should include the exception message" do
-          publishes(failed: lambda do |metadata|
-            metadata['message'].should == 'test'
-          end)
           @job.fail(Exception.new('test'))
+          verify_event :failed do |metadata|
+            metadata['message'].should == 'test'
+          end
         end
 
         it "should include the exception backtrace" do
           begin
             raise 'test'
           rescue => e
-            publishes(failed: lambda do |metadata|
-              metadata['backtrace'].nil?.should == false
-            end)
             @job.fail(e)
+            verify_event :failed do |metadata|
+              metadata['backtrace'].nil?.should == false
+            end
           end
         end
       end
