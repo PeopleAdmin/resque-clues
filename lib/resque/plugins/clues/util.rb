@@ -11,7 +11,7 @@ module Resque
 
       # The hostname Resque is running on.
       def self.hostname
-        `hostname`.chop
+        @hostname ||= Socket.gethostname
       end
 
       # The process id.
