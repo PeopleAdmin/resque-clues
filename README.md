@@ -151,8 +151,12 @@ end
 ```
 
 If used in a Rails application, this will need to be executed in an initalizer.
-After this, you should see events publishe as appropriate for your configured
-event publisher.
+If used outside of a Rails application, this will need to be executed in the Rakefile
+to ensure that both the application enqueuing jobs and the workers are configured. 
+This can be done by creating an initializer and requiring it in your Rakefile 
+after you have required both resque and resque-clues. After this, you should see 
+events published as appropriate for your configured event publisher.
+
 
 ## Contributing
 
