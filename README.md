@@ -151,8 +151,26 @@ end
 ```
 
 If used in a Rails application, this will need to be executed in an initalizer.
-After this, you should see events publishe as appropriate for your configured
-event publisher.
+
+Resque jobs will need to include Resque::Plugins::Clues::JobExtension. Here 
+is an example drawn from the Resque docs:
+
+```ruby
+class Archive
+  include Resque::Plugins::Clues::JobExtension
+
+  @queue = :file_serve
+
+  def self.perform(repo_id, branch = 'master')
+    repo = Repository.find(repo_id)
+    repo.create_archive(branch)
+  end
+end
+```
+
+After these steps, you should see events published as appropriate for your configured event publisher. Note that if used outside of a Rails application, the Resque-clues configuration will also need to explicitly occur prior to processing a job. 
+
+
 
 ## Contributing
 
