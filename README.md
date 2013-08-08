@@ -56,6 +56,7 @@ The following event publishers are currently provided:
 Resque::Plugins::Clues::StandardOutPublisher
 Resque::Plugins::Clues::LogPublisher
 Resque::Plugins::Clues::CompositePublisher
+Resque::Plugins::Clues::FilterPublisher
 ```
 
 You can implement your own publishers as long as they implement event handling

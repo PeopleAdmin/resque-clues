@@ -50,9 +50,10 @@ module Resque
         # [Return]
         #  * self
         def filter(*filters)
-          
-          @filters.push(filters)
-          @filtered_events = apply_filter(@filtered_events, filters)
+          unless filters.empty? 
+            @filters.push(filters)
+            @filtered_events = apply_filter(@filtered_events, filters)
+          end
           self
         end
 

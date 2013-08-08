@@ -12,7 +12,7 @@ describe Resque::Plugins::Clues::FilterPublisher do
     verify_filtered_event_published(:enqueue, "email")
   end
 
-  
+
   it "should filter currently published events when filter applied and push filters to filter list" do
     publish_event_type(:NoOpWorker, "email")
     publish_event_type(:NoOpWorker, "test_queue_1")
@@ -30,7 +30,7 @@ describe Resque::Plugins::Clues::FilterPublisher do
     @publisher.filter()
     @publisher.filters.length.should == 0
     @publisher.filtered_events.length.should == 3
-    verify_filtered_event_published(:NoOpWorker, "test_queue_1")
+    verify_filtered_event_published(:NoOpWorker, "test_queue_2")
   end
 
   it "should remove all filters on events and filters list when filters are cleared" do
@@ -63,13 +63,23 @@ describe Resque::Plugins::Clues::FilterPublisher do
     verify_filtered_event_published(:NoOpWorker, "test_queue_1")
   end
 
-  it "should be able to nest filters during calls" do
+  it "should be able to chain filters during calls" do
     publish_event_type(:enqueue, "email")
     publish_event_type(:enqueue, "test_queue1")
     publish_event_type(:dequeue, "test_queue1")
     @publisher.filter("queue == 'test_queue1'").filter('event_type == :dequeue')
     @publisher.filtered_events.length.should == 1
-     
+
+  end
+
+  it "should be able to apply several separate filters " do
+    publish_event_type(:enqueue, "email")
+    publish_event_type(:enqueue, "test_queue1")
+    publish_event_type(:dequeue, "test_queue1")
+    @publisher.filter("queue == 'test_queue1'")
+    @publisher.filter('event_type == :dequeue')
+    @publisher.filtered_events.length.should == 1
+
   end
 
 end
