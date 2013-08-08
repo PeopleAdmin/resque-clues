@@ -63,7 +63,7 @@ module Resque
               all_selectors << event.instance_eval(selector)
             end
     
-            !all_selectors.include?(false)
+            all_selectors.include?(false)
 
           end
           puts newevents
