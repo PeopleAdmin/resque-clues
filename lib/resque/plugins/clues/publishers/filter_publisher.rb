@@ -10,10 +10,8 @@ module Resque
 
         attr_reader :filtered_events, :events, :filters
 
-        # Initializer for the IndexerPublisher class
-        # [Parameters]
-        #  * options = Hash containing containing optional configuration parameters. See parameters below
-        def initialize(options={})
+        # Initializer for the FilterPublisher class
+        def initialize()
           @filters = []
           @filtered_events = []
           @events = []
@@ -27,13 +25,35 @@ module Resque
           if (@filters.length == 0)
             @filtered_events.push(event)
           else
-            @filtered_events.push(apply_filters(event,@filters))
+
+            @filtered_events.push(apply_all_filters([event],@filters)).flatten!
           end
         end
 
-        def filter(selectors=[])
-          filters.push(selectors)
-          @filtered_events = apply_filters(@filtered_events, selectors)
+
+        # 
+        # Filter method applies a filter to events currently received and filered, and future events published
+        # to FilterPublisher. The filters are applied as a set per call.
+        # 
+        # Example
+        # 
+        # [Parameters]  
+        #  * filters = Array of strings that contain Ruby equations that can be evaluated against an event
+        # 
+        # [Examples]
+        #  * event_list.filter("queue == 'testqueue'")
+        #    * Filter event_list to only include events that occur in the testqueue queue  
+        #  * event_list.filter("queue == 'testqueue' or queue == 'email")
+        #    * Filter event_list to only include events that occur in the testqueue and email queues
+        #  * event_list.filter("queue == 'testqueue'").filter("['enqueue', 'dequeue'].includes? even_type")
+        #    * Filters list for only enqueue and dequeue events in the testqueue queue
+        # [Return]
+        #  * self
+        def filter(*filters)
+          
+          @filters.push(filters)
+          @filtered_events = apply_filter(@filtered_events, filters)
+          self
         end
 
         def clear_filters
@@ -52,22 +72,29 @@ module Resque
                            :klass => klass,
                            :args => args
                            }.merge(metadata)
-          OpenStruct.new(current_event)
+          os_event = OpenStruct.new(current_event)
+          os_event.args.flatten!
+          os_event
         end
 
-        def apply_filters(events = [], selectors=[])
-          binding.pry
-          newevents = events.delete_if do |event|
+        def apply_all_filters(events = [], filter_sets=[])
+          filter_sets.each do |filter_set|
+            events = apply_filter(events, filter_set)
+          end
+          events
+        end
+
+        def apply_filter(events = [], filters=[])
+          new_events = events.delete_if do |event|
             all_selectors = Set.new
-            selectors.each do |selector|
+            filters.each do |selector|
               all_selectors << event.instance_eval(selector)
             end
-    
+
             all_selectors.include?(false)
 
           end
-          puts newevents
-          newevents
+          new_events
         end
 
 
