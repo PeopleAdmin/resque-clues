@@ -3,6 +3,7 @@ require 'resque/plugins/clues/util'
 require 'resque/plugins/clues/queue_extension'
 require 'resque/plugins/clues/job_extension'
 require 'resque/plugins/clues/event_publisher'
+require 'resque/plugins/clues/publishers/filter_publisher'
 require 'resque/plugins/clues/version'
 
 module Resque
