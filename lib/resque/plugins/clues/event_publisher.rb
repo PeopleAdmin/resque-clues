@@ -9,6 +9,12 @@ module Resque
       end
       EVENT_TYPES = %w[enqueued dequeued destroyed perform_started perform_finished failed]
 
+      # No op publisher, can be useful for testing/ensuring metadata injected
+      # even if you don't plan on pushing it anywhere.
+      class NoOpPublisher
+        define_method(:publish) {|*args|}
+      end
+
       # Event publisher that publishes events to a file-like stream in a JSON
       # format.  Each message is punctuated with a terminus character, which
       # defaults to newline ("\n")
