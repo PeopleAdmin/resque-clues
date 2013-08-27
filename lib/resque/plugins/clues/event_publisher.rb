@@ -12,7 +12,7 @@ module Resque
       # No op publisher, can be useful for testing/ensuring metadata injected
       # even if you don't plan on pushing it anywhere.
       class NoOpPublisher
-        define_method(:publish) {|*args|}
+        define_method(:publish) {|evt_data|}
       end
 
       # Event publisher that publishes events to a file-like stream in a JSON
@@ -30,8 +30,8 @@ module Resque
         end
 
         # Publishes an event to the stream.
-        def publish(event_type, timestamp, queue, metadata, klass, *args)
-          event = Clues.event_marshaller.call(event_type, timestamp, queue, metadata, klass, args)
+        def publish(event_data)
+          event = Clues.event_marshaller.call(event_data)
           stream.write(event)
         end
       end
@@ -63,9 +63,8 @@ module Resque
         end
 
         # Publishes an event to the log.
-        def publish(event_type, timestamp, queue, metadata, klass, *args)
-          logger.info(Clues.event_marshaller.call(
-            event_type, timestamp, queue, metadata, klass, args))
+        def publish(event_data)
+          logger.info(Clues.event_marshaller.call(event_data))
         end
       end
 
@@ -79,11 +78,9 @@ module Resque
 
         # Invokes publish on each child publisher for them to publish the event
         # in their own way.
-        def publish(event_type, timestamp, queue, metadata, klass, *args)
+        def publish(event_data)
           each do |child|
-            child.publish(
-              event_type, timestamp, queue, metadata, klass, *args
-            ) rescue error(event_type, child)
+            child.publish(event_data) rescue error(event_type, child)
           end
         end
 

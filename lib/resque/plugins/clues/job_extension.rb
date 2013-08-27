@@ -27,11 +27,21 @@ module Resque
         def self.define_perform(klass) # :doc:
           klass.send(:define_method, :_clues_perform) do
             if Clues.configured? and payload['clues_metadata']
-              Clues.event_publisher.publish(:perform_started, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
+              Clues.event_publisher.publish event_type: :perform_started,
+                                            timestamp: Clues.now,
+                                            queue: queue,
+                                            metadata: payload['clues_metadata'],
+                                            worker_class: payload['class'],
+                                            args: payload['args']
               @perform_started = Time.now
-              _base_perform.tap do 
+              _base_perform.tap do
                 payload['clues_metadata']['time_to_perform'] = Clues.time_delta_since(@perform_started)
-                Clues.event_publisher.publish(:perform_finished, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
+                Clues.event_publisher.publish event_type: :perform_finished,
+                                              timestamp: Clues.now,
+                                              queue: queue,
+                                              metadata: payload['clues_metadata'],
+                                              worker_class: payload['class'],
+                                              args: payload['args']
               end
             else
               _base_perform
@@ -54,7 +64,12 @@ module Resque
                 metadata['exception'] = exception.class
                 metadata['message'] = exception.message
                 metadata['backtrace'] = exception.backtrace
-                Clues.event_publisher.publish(:failed, Clues.now, queue, metadata, payload['class'], *payload['args'])
+                Clues.event_publisher.publish event_type: :failed,
+                                              timestamp: Clues.now,
+                                              queue: queue,
+                                              metadata: metadata,
+                                              worker_class: payload['class'],
+                                              args: payload['args']
               end
             end
           end

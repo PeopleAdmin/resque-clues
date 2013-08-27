@@ -5,15 +5,8 @@ class TestPublisher
     @events = []
   end
 
-  def publish(event_type, timestamp, queue, metadata, klass, *args)
-    events << {
-      event_type: event_type,
-      timestamp: timestamp,
-      queue: queue,
-      metadata: metadata,
-      klass: klass,
-      args: args
-    }
+  def publish(event_data)
+        events << symbolized(event_data)
   end
 
   def event_type(tail=-1)
@@ -33,10 +26,15 @@ class TestPublisher
   end
 
   def klass(tail=-1)
-    @events[tail][:klass]
+    @events[tail][:worker_class]
   end
 
   def args(tail=-1)
     @events[tail][:args]
+  end
+
+  private
+  def symbolized(event_data)
+    event_data.inject({}) {|memo, (k,v)| memo[k.to_sym] = v; memo}
   end
 end

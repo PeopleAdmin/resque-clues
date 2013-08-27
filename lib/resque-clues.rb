@@ -63,14 +63,14 @@ end
 # worker_class:: the worker job class
 # args:: arguments passed to the perform_method.
 Resque::Plugins::Clues.event_marshaller =
-  lambda do |event_type, timestamp, queue, metadata, worker_class, args|
+  lambda do |event_data|
     event = MultiJson.encode({
-      event_type: event_type,
-      timestamp: timestamp,
-      queue: queue,
-      metadata: metadata,
-      worker_class: worker_class,
-      args: args
+      event_type: event_data[:event_type],
+      timestamp: event_data[:timestamp],
+      queue: event_data[:queue],
+      metadata: event_data[:metadata],
+      worker_class: event_data[:worker_class],
+      args: event_data[:args]
     })
     "#{event}\n"
   end
