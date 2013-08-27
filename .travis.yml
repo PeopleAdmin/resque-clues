@@ -3,13 +3,13 @@ language: ruby
 rvm:
 - 1.9.3
 services:
-  - redis-server
+- redis-server
 notifications:
   email: false
   campfire:
     rooms:
-    - secure: ! 'j8CJevgIDpE/cQwKm9z5uVY8nXmvQFOoQP/OIieEBMPd7IaSv6YVNMmjHju3
+    - secure: ! 'Mul3ljnfdVyNDkAkCtwB+YAx3n+2JMpQqJD2iCNrz7axnvX24NzcnGUzqLgK
 
-        rKVL0471g0/+hfK1etfxeaygHjLVg1GmOnYH/CK97l3I3BnP5pEu7zz0wSs3
+        CGOLRLc95MxDiRFnTChoorIEs7ozlYb0xrJp5AGKLBc1B+r1P9djg0lxDx36
 
-        5Legz1OnsK11U1FAjfSkv088V3/IgyTVegU/SaSiSi03uUsRSVs='
+        tHIYY5K1/9cKbGncm3pwRDaqkI3kffFpwQ5b/IYXH/3S9RYaXCM='
