@@ -11,6 +11,7 @@ Gem::Specification.new do |gem|
   gem.description   = %q{Adds event publishing and job tracking ability to Resque}
   gem.summary       = %q{Adds event publishing and job tracking}
   gem.homepage      = "https://github.com/PeopleAdmin/resque-clues"
+  gem.license       = 'MIT'
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
