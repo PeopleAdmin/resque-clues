@@ -73,7 +73,7 @@ describe Resque::Plugins::Clues::JobExtension do
         it "should include the exception class" do
           @job.fail(Exception.new)
           verify_event :failed do |metadata|
-            metadata['exception'].should == Exception
+            metadata['exception'].should == 'Exception'
           end
         end
 

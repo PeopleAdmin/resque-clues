@@ -51,7 +51,7 @@ module Resque
               metadata = payload['clues_metadata']
               if Clues.configured? and metadata
                 metadata['time_to_perform'] = Clues.time_delta_since(@perform_started)
-                metadata['exception'] = exception.class
+                metadata['exception'] = exception.class.name
                 metadata['message'] = exception.message
                 metadata['backtrace'] = exception.backtrace
                 Clues.event_publisher.publish(:failed, Clues.now, queue, metadata, payload['class'], *payload['args'])
