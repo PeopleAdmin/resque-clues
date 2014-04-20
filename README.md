@@ -145,7 +145,7 @@ Here are some things we'd like to tackle in the future:
 
 * TCP/IP log publisher
 * UDP log publisher
-* An easily deployable, open-source visualization solution, probably based on logstash & graphite with some precanned searches and visualizations.
+* An easily deployable, open-source visualization solution already integrated with Resque-clues.  Elasticsearch & Kibana?  Logstash & Graphite?  Some opportunities here for others to help.
 
 ## Contributing
 
