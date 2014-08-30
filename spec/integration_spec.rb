@@ -52,9 +52,7 @@ describe 'end-to-end integration' do
   end
 
   def work
-    timeout(0.2) do
-      @worker.work(0.1)
-    end
+    timeout(0.2){ @worker.work(0.1) } rescue nil
   end
 
   def work_and_verify(&block)
