@@ -49,6 +49,7 @@ describe Resque::Plugins::Clues::JobExtension do
       it "should publish a perform_finished event that includes the time_to_perform" do
         job.perform
         verify_event :perform_finished do |metadata|
+          expect(metadata['_time_to_perform']).to_not be_nil
           expect(metadata['time_to_perform']).to_not be_nil
         end
       end
@@ -94,6 +95,7 @@ describe Resque::Plugins::Clues::JobExtension do
         it "should include the time_to_perform" do
           job.fail(Exception.new)
           verify_event :failed do |metadata|
+            expect(metadata['_time_to_perform']).to_not be_nil
             expect(metadata['time_to_perform']).to_not be_nil
           end
         end
@@ -101,6 +103,7 @@ describe Resque::Plugins::Clues::JobExtension do
         it "should include the exception class" do
           job.fail(Exception.new)
           verify_event :failed do |metadata|
+            expect(metadata['_exception']).to eq('Exception')
             expect(metadata['exception']).to eq('Exception')
           end
         end
@@ -108,6 +111,7 @@ describe Resque::Plugins::Clues::JobExtension do
         it "should include the exception message" do
           job.fail(Exception.new('test'))
           verify_event :failed do |metadata|
+            expect(metadata['_message']).to eq("test")
             expect(metadata['message']).to eq("test")
           end
         end
@@ -118,6 +122,7 @@ describe Resque::Plugins::Clues::JobExtension do
           rescue => e
             job.fail(e)
             verify_event :failed do |metadata|
+              expect(metadata['_backtrace']).to_not be_nil
               expect(metadata['backtrace']).to_not be_nil
             end
           end

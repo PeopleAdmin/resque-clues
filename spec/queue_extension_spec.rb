@@ -54,6 +54,7 @@ describe Resque::Plugins::Clues::QueueExtension do
         it "should contain an event_hash identifying the job entering the queue" do
           Resque.push(:test_queue, base_item)
           verify_event :enqueued do |metadata|
+            metadata['_event_hash'].nil?.should == false
             metadata['event_hash'].nil?.should == false
           end
         end
@@ -61,6 +62,7 @@ describe Resque::Plugins::Clues::QueueExtension do
         it "should contain the host's hostname" do
           Resque.push(:test_queue, base_item)
           verify_event :enqueued do |metadata|
+            metadata['_hostname'].should == `hostname`.strip
             metadata['hostname'].should == `hostname`.strip
           end
         end
@@ -68,6 +70,7 @@ describe Resque::Plugins::Clues::QueueExtension do
         it "should contain the process id" do
           Resque.push(:test_queue, base_item)
           verify_event :enqueued do |metadata|
+            metadata['_process'].should == $$
             metadata['process'].should == $$
           end
         end
@@ -114,6 +117,7 @@ describe Resque::Plugins::Clues::QueueExtension do
         it "should contain the hostname" do
           Resque.pop(:test_queue)
           verify_event :dequeued do |metadata|
+            metadata['_hostname'].should == `hostname`.chop
             metadata['hostname'].should == `hostname`.chop
           end
         end
@@ -121,6 +125,7 @@ describe Resque::Plugins::Clues::QueueExtension do
         it "should contain the process id" do
           Resque.pop(:test_queue)
           verify_event :dequeued do |metadata|
+            metadata['_process'].should == $$
             metadata['process'].should == $$
           end
         end
@@ -128,6 +133,7 @@ describe Resque::Plugins::Clues::QueueExtension do
         it "should contain an enqueued_time" do
           Resque.pop(:test_queue)
           verify_event :dequeued do |metadata|
+            metadata['_time_in_queue'].nil?.should == false
             metadata['time_in_queue'].nil?.should == false
           end
         end

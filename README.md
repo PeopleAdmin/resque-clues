@@ -135,7 +135,9 @@ end
 
 With your visualization tool, you could then break down performance graphs
 of these jobs by ```pdf_generation_strategy``` to have more fine grained
-performance metrics.
+performance metrics.  Note, Clues metadata that is system-generated will
+have a name that is prefixed with '_'.  Data injected into one of these
+system metadata fields during a perform method will be ignored.
 
 ## Event Format
 By default, resque clues publishes events in a JSON format using an event marshaller.
@@ -156,9 +158,9 @@ Here is n example of a resque clues event as marshalled to JSON:
   "timestamp":"2013-06-04T20:59:58Z",
   "queue":"test_queue",
   "metadata": {
-    "event_hash":"0695f49c5e70fc18da91961113e1769a"
-    "hostname":"Lances-MacBook-Air.local",
-    "process":30731
+    "_event_hash":"0695f49c5e70fc18da91961113e1769a"
+    "_hostname":"Lances-MacBook-Air.local",
+    "_process":30731
   },
   "worker_class":"TestWorker",
   "args":[1,2]
