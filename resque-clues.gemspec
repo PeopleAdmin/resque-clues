@@ -21,7 +21,11 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'multi_json', '~> 1.7.4'
   gem.add_development_dependency 'rake', '~> 0.9.2.2'
   gem.add_development_dependency 'rspec'
-  gem.add_development_dependency 'pry'
-  gem.add_development_dependency 'pry-debugger'
   gem.add_development_dependency 'cane'
+  gem.add_development_dependency 'pry'
+  if RUBY_VERSION.split('.').first.to_i >= 2
+    gem.add_development_dependency 'pry-byebug'
+  else
+    gem.add_development_dependency 'pry-debugger'
+  end
 end

@@ -52,9 +52,7 @@ describe 'end-to-end integration' do
   end
 
   def work
-    timeout(0.2) do
-      @worker.work(0.1)
-    end
+    timeout(0.2){ @worker.work(0.1) } rescue nil
   end
 
   def work_and_verify(&block)
@@ -68,6 +66,9 @@ describe 'end-to-end integration' do
     event["args"].should == args
     event["event_type"].should == type.to_s
     event["timestamp"].should_not be_nil
+    event["metadata"]["_event_hash"].should_not be_nil
+    event["metadata"]["_hostname"].should == `hostname`.strip
+    event["metadata"]["_process"].should == $$
     event["metadata"]["event_hash"].should_not be_nil
     event["metadata"]["hostname"].should == `hostname`.strip
     event["metadata"]["process"].should == $$
@@ -80,10 +81,12 @@ describe 'end-to-end integration' do
         events.size.should == 4
         verify_event(events[0], :enqueued, DummyWorker, "test")
         verify_event(events[1], :dequeued, DummyWorker, "test") do |event|
+          event["metadata"]["_time_in_queue"].should_not be_nil
           event["metadata"]["time_in_queue"].should_not be_nil
         end
         verify_event(events[2], :perform_started, DummyWorker, "test")
         verify_event(events[3], :perform_finished, DummyWorker, "test") do |event|
+          event["metadata"]["_time_to_perform"].should_not be_nil
           event["metadata"]["time_to_perform"].should_not be_nil
         end
       end
@@ -96,10 +99,15 @@ describe 'end-to-end integration' do
         events.size.should == 4
         verify_event(events[0], :enqueued, FailingDummyWorker, "test")
         verify_event(events[1], :dequeued, FailingDummyWorker, "test") do |event|
+          event["metadata"]["_time_in_queue"].should_not be_nil
           event["metadata"]["time_in_queue"].should_not be_nil
         end
         verify_event(events[2], :perform_started, FailingDummyWorker, "test")
         verify_event(events[3], :failed, FailingDummyWorker, "test") do |event|
+          event["metadata"]["_time_to_perform"].should_not be_nil
+          event["metadata"]["_exception"].should == RuntimeError.to_s
+          event["metadata"]["_message"].should == 'test'
+          event["metadata"]["_backtrace"].should_not be_nil
           event["metadata"]["time_to_perform"].should_not be_nil
           event["metadata"]["exception"].should == RuntimeError.to_s
           event["metadata"]["message"].should == 'test'

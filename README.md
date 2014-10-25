@@ -87,9 +87,12 @@ happened to any job entering your background queues.
 ## Surfacing Other Data
 
 The above works to surface backgrounding data as described in the lifecycle events
-section.  But you may want to break down your data along other axis.  To accomplish 
-this, you need to use an item preprocessor, which is just a block invoked before
-enqueing the job to further decorate the item stored in redis:
+section.  But you may want to break down your data along other axis.  There are
+two mechanisms to accomplish this -- **item preprocessors** and **runtime access
+to the clues metadata***.
+
+An item preprocessor is a block invoked before enqueing the job to further
+decorate the item stored in redis:
 
 ```ruby
 Resque::Plugins::Clues.item_preprocessor = proc do |queue, item| 
@@ -106,11 +109,35 @@ The item is a hash using string keys.  Its structure is as follows:
   'clues_metadata' => {}
 }
 ```
+Thus you can inject additional data that you want included with all events into
+the item's ```clues_metadata``` hash.  This wiring needs to be executed prior
+to any jobs being enqueued or dequeued within the application code, such as
+in a Rails initializer.
 
-Whatever additional data you want to track should be injected into the item's 
-```clues_metadata``` hash, and will be included in all other downstream events
-for a job.  This wiring codealso needs to be executed prior to any jobs being
-enqueued or dequeuend within the application code, such as a Rails initializer.
+Access to the clues metadata during a job's runtime is provided with the
+```Resque::Plugins::Clues::Runtime``` mixin.  It defines a ```#clues_metadata```
+method that will return the clues_metadata hash that can be injected with
+arbitrary data.  That data will be included with the perform_finished or failed
+events when the job completes.  Here is an example of one way you might use it:
+
+```ruby
+class PdfGenerationJob
+  extend Resque::Plugins::Clues::Runtime
+
+  @queue = pdf_generation
+  def self.perform(doc_id)
+    doc = Document.find(doc_id)
+    clues_metadata[:pdf_generation_strategy] = doc.strategy
+    doc.strategy.constantize.new(doc).generate!
+  end
+end
+```
+
+With your visualization tool, you could then break down performance graphs
+of these jobs by ```pdf_generation_strategy``` to have more fine grained
+performance metrics.  Note, Clues metadata that is system-generated will
+have a name that is prefixed with '_'.  Data injected into one of these
+system metadata fields during a perform method will be ignored.
 
 ## Event Format
 By default, resque clues publishes events in a JSON format using an event marshaller.
@@ -131,9 +158,9 @@ Here is n example of a resque clues event as marshalled to JSON:
   "timestamp":"2013-06-04T20:59:58Z",
   "queue":"test_queue",
   "metadata": {
-    "event_hash":"0695f49c5e70fc18da91961113e1769a"
-    "hostname":"Lances-MacBook-Air.local",
-    "process":30731
+    "_event_hash":"0695f49c5e70fc18da91961113e1769a"
+    "_hostname":"Lances-MacBook-Air.local",
+    "_process":30731
   },
   "worker_class":"TestWorker",
   "args":[1,2]

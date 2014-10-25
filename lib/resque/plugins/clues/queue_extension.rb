@@ -33,6 +33,10 @@ module Resque
         def _clues_push(queue, item)
           return _base_push(queue, item) unless Clues.clues_configured?
           item['clues_metadata'] = {
+            '_event_hash' => Clues.event_hash,
+            '_hostname' => Clues.hostname,
+            '_process' => Clues.process,
+            '_enqueued_time' => Time.now.utc.to_f,
             'event_hash' => Clues.event_hash,
             'hostname' => Clues.hostname,
             'process' => Clues.process,
@@ -55,9 +59,15 @@ module Resque
             # TODO refactor
             unless item.nil?
               if Clues.clues_configured? and item['clues_metadata']
-                item['clues_metadata']['hostname'] = Clues.hostname
-                item['clues_metadata']['process'] = Clues.process
-                item['clues_metadata']['time_in_queue'] = Clues.time_delta_since(item['clues_metadata']['enqueued_time'])
+                item['clues_metadata']['_hostname'] =
+                  item['clues_metadata']['hostname'] =
+                    Clues.hostname
+                item['clues_metadata']['_process'] =
+                  item['clues_metadata']['process'] =
+                    Clues.process
+                item['clues_metadata']['_time_in_queue'] =
+                  item['clues_metadata']['time_in_queue'] =
+                    Clues.time_delta_since(item['clues_metadata']['_enqueued_time'])
                 Clues.event_publisher.publish(:dequeued, Clues.now, queue, item['clues_metadata'], item['class'], *item['args'])
               end
             end

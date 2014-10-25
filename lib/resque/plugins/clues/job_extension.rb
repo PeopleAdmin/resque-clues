@@ -29,8 +29,12 @@ module Resque
             if Clues.configured? and payload['clues_metadata']
               Clues.event_publisher.publish(:perform_started, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
               @perform_started = Time.now
-              _base_perform.tap do 
-                payload['clues_metadata']['time_to_perform'] = Clues.time_delta_since(@perform_started)
+              Clues::Runtime.clues_metadata = payload['clues_metadata']
+              _base_perform.tap do
+                payload['clues_metadata']['_time_to_perform'] =
+                  payload['clues_metadata']['time_to_perform'] =
+                    Clues.time_delta_since(@perform_started)
+                Clues::Runtime.merge!(payload['clues_metadata'])
                 Clues.event_publisher.publish(:perform_finished, Clues.now, queue, payload['clues_metadata'], payload['class'], *payload['args'])
               end
             else
@@ -50,10 +54,19 @@ module Resque
             _base_fail(exception).tap do
               metadata = payload['clues_metadata']
               if Clues.configured? and metadata
-                metadata['time_to_perform'] = Clues.time_delta_since(@perform_started)
-                metadata['exception'] = exception.class.name
-                metadata['message'] = exception.message
-                metadata['backtrace'] = exception.backtrace
+                metadata['_time_to_perform'] =
+                  metadata['time_to_perform'] =
+                    Clues.time_delta_since(@perform_started)
+                metadata['_exception'] =
+                  metadata['exception'] =
+                    exception.class.name
+                metadata['_message'] =
+                  metadata['message'] =
+                    exception.message
+                metadata['_backtrace'] =
+                  metadata['backtrace'] =
+                    exception.backtrace
+                Clues::Runtime.merge!(metadata)
                 Clues.event_publisher.publish(:failed, Clues.now, queue, metadata, payload['class'], *payload['args'])
               end
             end
